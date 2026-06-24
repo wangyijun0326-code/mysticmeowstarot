@@ -6,6 +6,8 @@ export type HandCursor = {
   y: number;
   /** Whether a hand is currently detected. */
   active: boolean;
+  /** Whether the thumb + index tips are pinched together. */
+  pinch: boolean;
 };
 
 export type HandTrackingStatus =
@@ -21,19 +23,22 @@ const WASM_BASE =
 const MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 
+const IDLE_CURSOR: HandCursor = { x: 0.5, y: 0.5, active: false, pinch: false };
+
 /**
  * Streams the webcam, runs MediaPipe HandLandmarker and exposes the index
- * fingertip as a normalised virtual cursor. Mirrored so it feels like a mirror.
+ * fingertip as a normalised virtual cursor plus a pinch flag. The cursor is
+ * published through a ref (updated every video frame) so consumers can drive a
+ * requestAnimationFrame loop without forcing a React re-render each frame.
  */
 export function useHandTracking(enabled: boolean) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [status, setStatus] = useState<HandTrackingStatus>("idle");
-  const [cursor, setCursor] = useState<HandCursor>({ x: 0.5, y: 0.5, active: false });
+  const cursorRef = useRef<HandCursor>({ ...IDLE_CURSOR });
 
   const rafRef = useRef<number | null>(null);
   const landmarkerRef = useRef<unknown>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const cursorRef = useRef<HandCursor>(cursor);
 
   const stop = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -49,7 +54,7 @@ export function useHandTracking(enabled: boolean) {
     if (!enabled) {
       stop();
       setStatus("idle");
-      setCursor({ x: 0.5, y: 0.5, active: false });
+      cursorRef.current = { ...IDLE_CURSOR };
       return;
     }
 
@@ -99,18 +104,20 @@ export function useHandTracking(enabled: boolean) {
             const result = lm.detectForVideo(v, performance.now());
             const hand = result.landmarks?.[0];
             if (hand && hand[8]) {
-              // Landmark 8 = index fingertip. Mirror X for selfie view.
-              const next: HandCursor = {
-                x: 1 - hand[8].x,
-                y: hand[8].y,
+              const tip = hand[8]; // index fingertip
+              const thumb = hand[4]; // thumb tip
+              const dx = (thumb?.x ?? tip.x) - tip.x;
+              const dy = (thumb?.y ?? tip.y) - tip.y;
+              const pinchDist = Math.hypot(dx, dy);
+              cursorRef.current = {
+                // Mirror X so it tracks like a mirror.
+                x: 1 - tip.x,
+                y: tip.y,
                 active: true,
+                pinch: pinchDist < 0.06,
               };
-              cursorRef.current = next;
-              setCursor(next);
             } else if (cursorRef.current.active) {
-              const next = { ...cursorRef.current, active: false };
-              cursorRef.current = next;
-              setCursor(next);
+              cursorRef.current = { ...cursorRef.current, active: false, pinch: false };
             }
           }
           rafRef.current = requestAnimationFrame(loop);
@@ -131,5 +138,5 @@ export function useHandTracking(enabled: boolean) {
     };
   }, [enabled, stop]);
 
-  return { videoRef, status, cursor };
+  return { videoRef, status, cursorRef };
 }

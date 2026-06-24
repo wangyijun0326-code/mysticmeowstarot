@@ -7,11 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { GestureProvider } from "@/components/gesture/gesture-provider";
 
 function useEnsureSession() {
   useEffect(() => {
@@ -145,9 +146,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEnsureSession();
 
+  // The gesture engine relies on browser APIs (camera, window, document),
+  // so it only mounts on the client after hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      {mounted ? (
+        <GestureProvider>
+          <Outlet />
+        </GestureProvider>
+      ) : (
+        <Outlet />
+      )}
     </QueryClientProvider>
   );
 }
