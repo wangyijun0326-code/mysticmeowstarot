@@ -175,56 +175,16 @@
 }
 
 .tarot-stage-frame {
-  @apply relative isolate flex aspect-[1672/941] w-full overflow-hidden border border-border bg-card shadow-[0_30px_90px_0_var(--shadow)];
-}
-
-.tarot-reference-backdrop {
-  @apply absolute inset-0 h-full w-full object-cover;
-}
-
-.tarot-vignette {
-  @apply absolute inset-0;
+  @apply relative isolate flex aspect-[1672/941] w-full overflow-hidden rounded-2xl;
   background:
-    radial-gradient(circle at center, transparent 0%, transparent 40%, color-mix(in oklab, black 56%, transparent) 100%),
-    linear-gradient(180deg, color-mix(in oklab, black 10%, transparent) 0%, color-mix(in oklab, black 26%, transparent) 100%);
-}
-
-.tarot-noise {
-  @apply absolute inset-0 opacity-20;
-  background-image:
-    radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--gold) 40%, transparent) 0 1px, transparent 1px),
-    radial-gradient(circle at 80% 35%, color-mix(in oklab, var(--gold) 38%, transparent) 0 1px, transparent 1px),
-    radial-gradient(circle at 45% 65%, color-mix(in oklab, var(--gold) 28%, transparent) 0 1px, transparent 1px);
-  background-size: 180px 180px, 210px 210px, 240px 240px;
+    radial-gradient(circle at 50% 18%, color-mix(in oklab, var(--plum) 55%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, oklch(0.14 0.02 300) 0%, oklch(0.1 0.015 300) 100%);
 }
 
 .tarot-stage-content {
   @apply relative z-10 flex h-full w-full flex-col px-[2.2%] py-[1.8%];
 }
 
-.tarot-border {
-  @apply pointer-events-none absolute inset-[0.75%] border border-border;
-}
-
-.corner {
-  @apply absolute h-[3.4%] w-[2%] border-gold opacity-90;
-}
-
-.top-left {
-  @apply left-0 top-0 border-l border-t;
-}
-
-.top-right {
-  @apply right-0 top-0 border-r border-t;
-}
-
-.bottom-left {
-  @apply bottom-0 left-0 border-b border-l;
-}
-
-.bottom-right {
-  @apply bottom-0 right-0 border-b border-r;
-}
 
 .tarot-nav {
   @apply flex h-[11%] items-start justify-center;
