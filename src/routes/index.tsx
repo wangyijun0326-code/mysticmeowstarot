@@ -69,7 +69,7 @@ function Index() {
   const isDrawComplete = requiredCount > 0 && drawnCards.length === requiredCount;
 
   const railDeck = useMemo(
-    () => deck.filter((card) => !selectedIds.includes(card.instanceId)).slice(0, 16),
+    () => deck.filter((card) => !selectedIds.includes(card.instanceId)),
     [deck, selectedIds],
   );
 
