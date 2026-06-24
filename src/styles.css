@@ -217,27 +217,41 @@
 }
 
 .tarot-home-stage {
-  @apply relative flex flex-1 items-center justify-center;
+  @apply relative flex flex-1 flex-col items-center justify-center gap-[3vh];
+}
+
+.tarot-home-orb {
+  @apply flex h-[16vh] max-h-[150px] w-[16vh] max-w-[150px] items-center justify-center rounded-full;
+  background: radial-gradient(circle at 38% 32%, color-mix(in oklab, var(--gold) 55%, transparent) 0%, color-mix(in oklab, var(--plum) 70%, transparent) 70%, transparent 100%);
+}
+
+.tarot-home-moon {
+  @apply text-[clamp(2.2rem,5vw,4rem)] leading-none text-primary;
 }
 
 .tarot-home-title-wrap {
-  @apply absolute right-[14%] top-[22%] w-[43%];
+  @apply flex flex-col items-center gap-[1.4vh] text-center;
 }
 
-.tarot-home-sign {
-  @apply border border-border px-[8%] py-[9%] text-center;
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gold) 20%, transparent), 0 0 28px 0 color-mix(in oklab, var(--gold) 18%, transparent);
-  background: color-mix(in oklab, var(--background) 82%, transparent);
-}
-
-.tarot-home-title {
-  @apply text-[clamp(2.3rem,5.6vw,6.5rem)] leading-[0.92] text-primary;
+.tarot-home-kicker {
+  @apply text-[clamp(0.85rem,1.4vw,1.4rem)] tracking-[0.5em] text-primary/70;
   font-family: var(--font-display);
 }
 
-.tarot-home-actions {
-  @apply absolute bottom-[25%] right-[8%] flex gap-[4.2%];
+.tarot-home-title {
+  @apply max-w-[18ch] text-[clamp(2.1rem,5.2vw,5.6rem)] leading-[0.95] text-primary;
+  font-family: var(--font-display);
 }
+
+.tarot-home-sub {
+  @apply text-[clamp(1rem,1.6vw,1.8rem)] text-primary/85;
+  font-family: var(--font-body);
+}
+
+.tarot-home-actions {
+  @apply flex gap-[5%];
+}
+
 
 .tarot-paw-button {
   @apply relative flex aspect-square w-[11vw] min-w-[120px] max-w-[178px] items-center justify-center text-primary transition-transform duration-300 disabled:opacity-40;
