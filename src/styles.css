@@ -170,26 +170,26 @@
   }
 }
 
-@utility tarot-page-shell {
+.tarot-page-shell {
   @apply relative mx-auto flex min-h-screen w-full max-w-[1720px] flex-col items-center justify-center px-3 py-3 sm:px-5 sm:py-5;
 }
 
-@utility tarot-stage-frame {
+.tarot-stage-frame {
   @apply relative isolate flex aspect-[1672/941] w-full overflow-hidden border border-border bg-card shadow-[0_30px_90px_0_var(--shadow)];
 }
 
-@utility tarot-reference-backdrop {
+.tarot-reference-backdrop {
   @apply absolute inset-0 h-full w-full object-cover;
 }
 
-@utility tarot-vignette {
+.tarot-vignette {
   @apply absolute inset-0;
   background:
     radial-gradient(circle at center, transparent 0%, transparent 40%, color-mix(in oklab, black 56%, transparent) 100%),
     linear-gradient(180deg, color-mix(in oklab, black 10%, transparent) 0%, color-mix(in oklab, black 26%, transparent) 100%);
 }
 
-@utility tarot-noise {
+.tarot-noise {
   @apply absolute inset-0 opacity-20;
   background-image:
     radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--gold) 40%, transparent) 0 1px, transparent 1px),
@@ -198,417 +198,417 @@
   background-size: 180px 180px, 210px 210px, 240px 240px;
 }
 
-@utility tarot-stage-content {
+.tarot-stage-content {
   @apply relative z-10 flex h-full w-full flex-col px-[2.2%] py-[1.8%];
 }
 
-@utility tarot-border {
+.tarot-border {
   @apply pointer-events-none absolute inset-[0.75%] border border-border;
 }
 
-@utility corner {
+.corner {
   @apply absolute h-[3.4%] w-[2%] border-gold opacity-90;
 }
 
-@utility top-left {
+.top-left {
   @apply left-0 top-0 border-l border-t;
 }
 
-@utility top-right {
+.top-right {
   @apply right-0 top-0 border-r border-t;
 }
 
-@utility bottom-left {
+.bottom-left {
   @apply bottom-0 left-0 border-b border-l;
 }
 
-@utility bottom-right {
+.bottom-right {
   @apply bottom-0 right-0 border-b border-r;
 }
 
-@utility tarot-nav {
+.tarot-nav {
   @apply flex h-[11%] items-start justify-center;
 }
 
-@utility tarot-nav nav {
+.tarot-nav nav {
   @apply grid w-full grid-cols-[1fr_1fr_auto_1fr_1fr] items-center border-b border-border px-[9%] pb-[1.1%] pt-[0.5%] text-[clamp(0.8rem,1vw,1.55rem)] tracking-[0.08em] text-primary;
   font-family: var(--font-display);
 }
 
-@utility tarot-nav nav a {
+.tarot-nav nav a {
   @apply justify-self-center opacity-85 transition-opacity duration-300;
 }
 
-@utility tarot-nav nav a:hover {
+.tarot-nav nav a:hover {
   @apply opacity-100;
 }
 
-@utility tarot-nav nav a.is-active {
+.tarot-nav nav a.is-active {
   @apply relative opacity-100;
 }
 
-@utility tarot-nav nav a.is-active::after {
+.tarot-nav nav a.is-active::after {
   content: "";
   @apply absolute left-1/2 top-[125%] h-px w-[4.2rem] -translate-x-1/2 bg-primary;
 }
 
-@utility tarot-nav-moon {
+.tarot-nav-moon {
   @apply justify-self-center text-[1.6em] leading-none text-primary;
 }
 
-@utility tarot-home-stage {
+.tarot-home-stage {
   @apply relative flex flex-1 items-center justify-center;
 }
 
-@utility tarot-home-title-wrap {
+.tarot-home-title-wrap {
   @apply absolute right-[14%] top-[22%] w-[43%];
 }
 
-@utility tarot-home-sign {
+.tarot-home-sign {
   @apply border border-border px-[8%] py-[9%] text-center;
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gold) 20%, transparent), 0 0 28px 0 color-mix(in oklab, var(--gold) 18%, transparent);
   background: color-mix(in oklab, var(--background) 82%, transparent);
 }
 
-@utility tarot-home-title {
+.tarot-home-title {
   @apply text-[clamp(2.3rem,5.6vw,6.5rem)] leading-[0.92] text-primary;
   font-family: var(--font-display);
 }
 
-@utility tarot-home-actions {
+.tarot-home-actions {
   @apply absolute bottom-[25%] right-[8%] flex gap-[4.2%];
 }
 
-@utility tarot-paw-button {
+.tarot-paw-button {
   @apply relative flex aspect-square w-[11vw] min-w-[120px] max-w-[178px] items-center justify-center text-primary transition-transform duration-300 disabled:opacity-40;
 }
 
-@utility tarot-paw-outline {
+.tarot-paw-outline {
   @apply pointer-events-none absolute inset-0;
 }
 
-@utility toe {
+.toe {
   @apply absolute rounded-full border border-border;
 }
 
-@utility toe-1 {
+.toe-1 {
   @apply left-[18%] top-[12%] h-[22%] w-[16%];
 }
 
-@utility toe-2 {
+.toe-2 {
   @apply left-[36%] top-[4%] h-[20%] w-[16%];
 }
 
-@utility toe-3 {
+.toe-3 {
   @apply right-[36%] top-[4%] h-[20%] w-[16%];
 }
 
-@utility toe-4 {
+.toe-4 {
   @apply right-[18%] top-[12%] h-[22%] w-[16%];
 }
 
-@utility pad {
+.pad {
   @apply absolute bottom-[10%] left-1/2 h-[50%] w-[58%] -translate-x-1/2 rounded-[999px_999px_40%_40%] border border-border;
 }
 
-@utility tarot-paw-label {
+.tarot-paw-label {
   @apply relative z-10 mt-[20%] text-[clamp(1rem,1.8vw,2rem)] tracking-[0.08em];
   font-family: var(--font-display);
 }
 
-@utility tarot-paw-small {
+.tarot-paw-small {
   @apply absolute bottom-[14%] left-1/2 z-10 -translate-x-1/2 text-gold;
 }
 
-@utility tarot-spread-stage {
+.tarot-spread-stage {
   @apply flex flex-1 flex-col items-center;
 }
 
-@utility tarot-stage-heading {
+.tarot-stage-heading {
   @apply mt-[4.3%] flex flex-col items-center gap-[0.7vh] text-center text-primary;
 }
 
-@utility tarot-stage-heading h2 {
+.tarot-stage-heading h2 {
   @apply text-[clamp(2.2rem,5vw,5.2rem)] leading-none;
   font-family: var(--font-display);
 }
 
-@utility tarot-stage-heading p {
+.tarot-stage-heading p {
   @apply text-[clamp(1rem,1.8vw,2.2rem)] leading-none text-primary/90;
   font-family: var(--font-body);
 }
 
-@utility tarot-stage-heading-lines {
+.tarot-stage-heading-lines {
   @apply h-px w-[14vw] min-w-[120px] bg-border;
 }
 
-@utility tarot-spread-grid {
+.tarot-spread-grid {
   @apply mt-[8.2%] grid w-full grid-cols-3 gap-[2.4%] px-[11.5%];
 }
 
-@utility tarot-spread-card {
+.tarot-spread-card {
   @apply relative flex min-h-[24rem] flex-col items-center justify-between border border-border bg-card/55 px-[7%] py-[8%] text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--gold)_12%,transparent)];
 }
 
-@utility tarot-spread-card-header {
+.tarot-spread-card-header {
   @apply text-[clamp(1.45rem,2.2vw,2.5rem)] leading-none;
   font-family: var(--font-display);
 }
 
-@utility tarot-spread-card-preview {
+.tarot-spread-card-preview {
   @apply relative flex h-[9.5rem] w-full items-center justify-center;
 }
 
-@utility tarot-spread-mini-card {
+.tarot-spread-mini-card {
   @apply absolute aspect-[1086/1448] w-[18%] rounded-[0.35rem] border border-border bg-secondary/70 shadow-[0_0_12px_0_color-mix(in_oklab,var(--gold)_20%,transparent)];
 }
 
-@utility spread-daily-0 {
+.spread-daily-0 {
   @apply left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-three-0 {
+.spread-three-0 {
   @apply left-[25%] top-1/2 -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-three-1 {
+.spread-three-1 {
   @apply left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-three-2 {
+.spread-three-2 {
   @apply left-[75%] top-1/2 -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-either-0 {
+.spread-either-0 {
   @apply bottom-[0%] left-1/2 -translate-x-1/2;
 }
 
-@utility spread-either-1 {
+.spread-either-1 {
   @apply left-[31%] top-[58%] -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-either-2 {
+.spread-either-2 {
   @apply left-[19%] top-[25%] -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-either-3 {
+.spread-either-3 {
   @apply left-[69%] top-[58%] -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility spread-either-4 {
+.spread-either-4 {
   @apply left-[81%] top-[25%] -translate-x-1/2 -translate-y-1/2;
 }
 
-@utility tarot-spread-card-copy {
+.tarot-spread-card-copy {
   @apply max-w-[78%] text-center text-[clamp(1rem,1.5vw,1.7rem)] leading-tight;
   font-family: var(--font-body);
 }
 
-@utility tarot-shuffle-stage {
+.tarot-shuffle-stage {
   @apply flex flex-1 flex-col items-center;
 }
 
-@utility tarot-shuffle-pile-wrap {
+.tarot-shuffle-pile-wrap {
   @apply relative mt-[8%] flex flex-1 w-full items-center justify-center;
 }
 
-@utility tarot-shuffle-pile {
+.tarot-shuffle-pile {
   @apply relative h-[38vh] max-h-[430px] w-[70%] max-w-[1120px] touch-pan-x;
 }
 
-@utility tarot-shuffle-card {
+.tarot-shuffle-card {
   @apply absolute left-1/2 top-1/2 w-[14.4%] min-w-[116px] -translate-x-1/2 -translate-y-1/2 will-change-transform;
 }
 
-@utility tarot-card-image {
+.tarot-card-image {
   @apply aspect-[1086/1448] w-full rounded-[0.45rem] object-cover;
   box-shadow: 0 0 24px 0 color-mix(in oklab, black 35%, transparent);
 }
 
-@utility tarot-card-floating {
+.tarot-card-floating {
   box-shadow: 0 0 30px 0 color-mix(in oklab, var(--gold) 26%, transparent);
 }
 
-@utility tarot-shuffle-stars {
+.tarot-shuffle-stars {
   @apply absolute inset-0 pointer-events-none;
 }
 
-@utility tarot-star-dot {
+.tarot-star-dot {
   @apply absolute h-[0.35rem] w-[0.35rem] rounded-full bg-gold;
 }
 
-@utility tarot-stage-bottom {
+.tarot-stage-bottom {
   @apply mb-[4%] flex min-h-[12%] w-full flex-col items-center justify-end gap-[1.6vh];
 }
 
-@utility tarot-shuffle-prompt {
+.tarot-shuffle-prompt {
   @apply flex items-center gap-3 text-[clamp(1.1rem,2vw,2.25rem)] text-primary;
   font-family: var(--font-body);
 }
 
-@utility tarot-paw-icon {
+.tarot-paw-icon {
   @apply text-[1.3em];
 }
 
-@utility tarot-primary-action {
+.tarot-primary-action {
   @apply border border-border bg-card/40 px-5 py-2 text-[1rem] text-primary hover:bg-accent/40;
 }
 
-@utility tarot-draw-stage {
+.tarot-draw-stage {
   @apply flex flex-1 flex-col items-center;
 }
 
-@utility tarot-slot-field {
+.tarot-slot-field {
   @apply relative mt-[4.5%] h-[58%] w-full;
 }
 
-@utility tarot-slot-anchor {
+.tarot-slot-anchor {
   @apply absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3;
 }
 
-@utility tarot-slot-placeholder {
+.tarot-slot-placeholder {
   @apply aspect-[1086/1448] w-[9.6vw] min-w-[110px] max-w-[176px] rounded-[0.42rem] border border-dashed border-border bg-card/18;
 }
 
-@utility tarot-reveal-wrapper {
+.tarot-reveal-wrapper {
   @apply relative aspect-[1086/1448] w-[9.6vw] min-w-[110px] max-w-[176px];
 }
 
-@utility tarot-reveal-wrapper.is-glowing {
+.tarot-reveal-wrapper.is-glowing {
   filter: drop-shadow(0 0 18px var(--glow-strong));
 }
 
-@utility tarot-card-face {
+.tarot-card-face {
   @apply absolute inset-0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-@utility tarot-card-face-front {
+.tarot-card-face-front {
   transform: rotateY(180deg);
 }
 
-@utility tarot-paw-burst {
+.tarot-paw-burst {
   @apply pointer-events-none absolute left-1/2 top-[8%] h-10 w-10 -translate-x-1/2 rounded-full;
   background: radial-gradient(circle, color-mix(in oklab, var(--gold) 85%, white) 0%, transparent 70%);
 }
 
-@utility tarot-slot-caption {
+.tarot-slot-caption {
   @apply flex min-h-[5.8rem] flex-col items-center gap-1 text-center text-primary;
 }
 
-@utility tarot-slot-caption > span {
+.tarot-slot-caption > span {
   @apply text-[clamp(0.8rem,1.25vw,1.35rem)] tracking-[0.06em];
   font-family: var(--font-display);
 }
 
-@utility tarot-card-meta {
+.tarot-card-meta {
   @apply flex flex-col items-center text-[clamp(0.95rem,1.25vw,1.3rem)] leading-tight;
 }
 
-@utility tarot-card-meta strong {
+.tarot-card-meta strong {
   @apply font-medium;
 }
 
-@utility tarot-card-meta em {
+.tarot-card-meta em {
   @apply not-italic text-primary/80;
 }
 
-@utility tarot-bottom-drawer {
+.tarot-bottom-drawer {
   @apply mt-auto flex w-full items-end justify-center gap-[1.1%] px-[2%];
 }
 
-@utility tarot-card-rail {
+.tarot-card-rail {
   @apply flex w-[92%] items-end justify-center gap-[0.8%] overflow-x-auto px-[0.5%] pb-[1.5%];
   scrollbar-width: none;
 }
 
-@utility tarot-card-rail::-webkit-scrollbar {
+.tarot-card-rail::-webkit-scrollbar {
   display: none;
 }
 
-@utility tarot-rail-card {
+.tarot-rail-card {
   @apply relative w-[7.3vw] min-w-[84px] max-w-[136px] shrink-0 will-change-transform;
 }
 
-@utility tarot-drawer-arrow {
+.tarot-drawer-arrow {
   @apply mb-[7%] text-[clamp(1.5rem,2vw,2.4rem)] text-primary/75;
 }
 
-@utility tarot-reveal-trigger {
+.tarot-reveal-trigger {
   @apply inline-flex items-center gap-2 border border-border bg-card/60 px-5 py-2 text-[clamp(1rem,1.3vw,1.35rem)] text-primary;
   font-family: var(--font-display);
 }
 
-@utility tarot-guidance-line {
+.tarot-guidance-line {
   @apply text-center text-[clamp(1.05rem,2vw,2rem)] text-primary/92;
   font-family: var(--font-body);
 }
 
-@utility tarot-reading-panel {
+.tarot-reading-panel {
   @apply mt-[1.8%] w-full px-[5%] pb-[2%];
 }
 
-@utility tarot-reading-header {
+.tarot-reading-header {
   @apply flex items-center justify-between gap-4 border-t border-border pt-5 text-primary;
 }
 
-@utility tarot-reading-kicker {
+.tarot-reading-kicker {
   @apply text-sm tracking-[0.14em] text-primary/70;
   font-family: var(--font-display);
 }
 
-@utility tarot-reading-header h2 {
+.tarot-reading-header h2 {
   @apply text-[clamp(1.55rem,2.2vw,2.3rem)];
   font-family: var(--font-display);
 }
 
-@utility tarot-reading-summary {
+.tarot-reading-summary {
   @apply mt-4 min-h-[6rem] max-w-[82rem] text-[clamp(1.05rem,1.4vw,1.5rem)] leading-[1.45] text-primary/95;
 }
 
-@utility tarot-reading-grid {
+.tarot-reading-grid {
   @apply mt-6 grid gap-4;
 }
 
-@utility reading-daily {
+.reading-daily {
   @apply grid-cols-1;
 }
 
-@utility reading-three {
+.reading-three {
   @apply grid-cols-3;
 }
 
-@utility reading-either {
+.reading-either {
   @apply grid-cols-5;
 }
 
-@utility tarot-reading-card-copy {
+.tarot-reading-card-copy {
   @apply border border-border bg-card/40 px-3 py-3 text-primary/90;
 }
 
-@utility tarot-reading-card-copy h3 {
+.tarot-reading-card-copy h3 {
   @apply mb-2 text-[clamp(1rem,1.2vw,1.2rem)];
   font-family: var(--font-display);
 }
 
-@utility tarot-reading-card-copy p {
+.tarot-reading-card-copy p {
   @apply text-[clamp(0.95rem,1.1vw,1.15rem)] leading-[1.4];
 }
 
-@utility tarot-footer-meta {
+.tarot-footer-meta {
   @apply mt-2 flex w-full flex-wrap justify-between gap-2 px-2 text-xs text-primary/55;
 }
 
-@utility field-daily .tarot-slot-anchor {
+.field-daily .tarot-slot-anchor {
   @apply -translate-y-[39%];
 }
 
-@utility field-three .tarot-slot-anchor {
+.field-three .tarot-slot-anchor {
   @apply -translate-y-[18%];
 }
 
-@utility field-either .tarot-slot-anchor {
+.field-either .tarot-slot-anchor {
   @apply -translate-y-[8%];
 }
 
