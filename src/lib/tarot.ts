@@ -125,10 +125,10 @@ export const SPREADS: Record<SpreadId, SpreadDefinition> = {
     id: "either",
     title: "EITHER OR",
     subtitle: "二选一牌阵",
-    guidance: "COMPARE TWO PATHS. CHOOSE YOUR DIRECTION.",
+    guidance: "对比两条路径，看清各自的走向。",
     revealPrompt: "TAP TO REVEAL",
-    interpretationTitle: "命运分岔口",
-    positions: ["CURRENT", "A PATH", "A OUTCOME", "B PATH", "B OUTCOME"],
+    interpretationTitle: "两条路径的对照",
+    positions: ["现状", "路径 A", "A 的结果", "路径 B", "B 的结果"],
   },
 };
 
