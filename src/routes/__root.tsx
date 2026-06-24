@@ -11,6 +11,17 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { supabase } from "@/integrations/supabase/client";
+
+function useEnsureSession() {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        supabase.auth.signInAnonymously();
+      }
+    });
+  }, []);
+}
 
 function NotFoundComponent() {
   return (
@@ -132,6 +143,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEnsureSession();
 
   return (
     <QueryClientProvider client={queryClient}>
