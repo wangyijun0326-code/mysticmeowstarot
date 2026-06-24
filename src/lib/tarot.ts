@@ -132,20 +132,49 @@ export const SPREADS: Record<SpreadId, SpreadDefinition> = {
   },
 };
 
+// Slot positions are tuned to overlay precisely on the design screenshots
+// (1672 x 941). Values are percentages of the stage frame.
 export const SLOT_LAYOUTS: Record<SpreadId, Array<{ left: string; top: string }>> = {
-  daily: [{ left: "50%", top: "47%" }],
+  daily: [{ left: "50%", top: "40%" }],
   three: [
-    { left: "25%", top: "50%" },
-    { left: "50%", top: "50%" },
-    { left: "75%", top: "50%" },
+    { left: "33.5%", top: "41%" }, // PAST
+    { left: "50%", top: "41%" }, // PRESENT
+    { left: "66.5%", top: "41%" }, // FUTURE
   ],
   either: [
-    { left: "50%", top: "72%" },
-    { left: "34%", top: "48%" },
-    { left: "22%", top: "25%" },
-    { left: "66%", top: "48%" },
-    { left: "78%", top: "25%" },
+    { left: "50%", top: "55.5%" }, // 1 现状
+    { left: "32.7%", top: "54%" }, // 2 路径 A
+    { left: "30.5%", top: "30.5%" }, // 3 A 的结果
+    { left: "65.5%", top: "54%" }, // 4 路径 B
+    { left: "68.5%", top: "30.5%" }, // 5 B 的结果
   ],
+};
+
+// Maps each spread to its design-screenshot filenames living in /public/assets.
+// These drive the application state machine: every state renders the matching
+// screenshot as an <img> base layer (never a CSS background).
+export const SPREAD_ASSETS: Record<
+  SpreadId,
+  { draw: string; success: string; reversal: string; end: string }
+> = {
+  daily: {
+    draw: "one_card.png",
+    success: "one_card_success.png",
+    reversal: "one_card_reversal.png",
+    end: "one-end.png",
+  },
+  three: {
+    draw: "three_cards.png",
+    success: "three_cards_success.png",
+    reversal: "three_cards_reversal.png",
+    end: "three-end.png",
+  },
+  either: {
+    draw: "five_cards.png",
+    success: "five_cards_success.png",
+    reversal: "five_cards_reversal.png",
+    end: "five-end.png",
+  },
 };
 
 export const tarotDeck: TarotCardMeta[] = [
@@ -331,9 +360,9 @@ const uploadedCardFrontPaths: Partial<Record<number, string>> = {
 };
 
 export function getCardBackPath() {
-  return "/cat_tarot_78_single_cards/back.png";
+  return "/assets/back.png";
 }
 
 export function getCardFrontPath(cardNumber: number) {
-  return uploadedCardFrontPaths[cardNumber] ?? `/cat_tarot_78_single_cards/${cardNumber}.png`;
+  return `/assets/${cardNumber}.png`;
 }
