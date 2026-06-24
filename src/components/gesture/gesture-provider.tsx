@@ -204,7 +204,8 @@ export function GestureProvider({ children }: { children: ReactNode }) {
             if (start.x < EDGE_BACK_ZONE && dx > EDGE_BACK_DX && dy < 0.18) {
               edgeCooldown = now + 1200;
               edgeBuf.length = 0;
-              window.history.back();
+              // Walk the in-app state machine back via a global event.
+              window.dispatchEvent(new CustomEvent("gesture:back"));
             }
           }
         } else {
