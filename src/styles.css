@@ -630,13 +630,14 @@
     min-height: 15rem;
   }
 
-  .tarot-shuffle-pile {
-    @apply h-[32vh] w-[94%];
+  .tarot-shuffle-fan {
+    @apply h-[26vh] w-[96%];
   }
 
-  .tarot-shuffle-card {
-    @apply w-[23%] min-w-[82px];
+  .tarot-fan-card {
+    @apply w-[12%] min-w-[48px];
   }
+
 
   .tarot-slot-field {
     @apply h-[46%];
