@@ -50,6 +50,7 @@ function extractJson(raw: string): unknown {
 }
 
 export const generateTarotReading = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ReadingInput.parse(input))
   .handler(async ({ data }) => {
     const lovableApiKey = process.env.LOVABLE_API_KEY;
