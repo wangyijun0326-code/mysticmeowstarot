@@ -78,7 +78,9 @@ function Index() {
     if (gameState === "MENU") return assetUrl("menu.png");
     if (gameState === "SPREAD_SELECTION") return assetUrl("spreads.png");
     if (gameState === "DRAWING" && spreadId) {
-      return assetUrl(successFlash ? SPREAD_ASSETS[spreadId].success : SPREAD_ASSETS[spreadId].draw);
+      // Drawing uses a real DOM layout (slots + horizontal pool), not a full
+      // screenshot background. Only flash the "success" art when complete.
+      return successFlash ? assetUrl(SPREAD_ASSETS[spreadId].success) : null;
     }
     if (gameState === "REVEAL" && spreadId && !revealed) {
       return assetUrl(SPREAD_ASSETS[spreadId].reversal);
