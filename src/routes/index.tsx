@@ -7,7 +7,7 @@ import spreadsAsset from "@/assets/tarot-spreads.png.asset.json";
 import washAsset from "@/assets/tarot-wash.png.asset.json";
 import oneCardAsset from "@/assets/tarot-one-card.png.asset.json";
 import oneCardSuccessAsset from "@/assets/tarot-one-card-success.png.asset.json";
-import oneCardRevealAsset from "@/assets/tarot-one-card-reversal.png.asset.json";
+
 import threeCardsAsset from "@/assets/uploaded/three_cards.png.asset.json";
 import threeCardsSuccessAsset from "@/assets/uploaded/three_cards_success.png.asset.json";
 import threeCardsRevealAsset from "@/assets/uploaded/three_cards_reversal.png.asset.json";
