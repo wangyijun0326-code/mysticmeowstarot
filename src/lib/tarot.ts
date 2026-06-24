@@ -39,6 +39,16 @@ import card38Asset from "@/assets/uploaded/card-38.png.asset.json";
 import card39Asset from "@/assets/uploaded/card-39.png.asset.json";
 import card40Asset from "@/assets/uploaded/card-40.png.asset.json";
 import card41Asset from "@/assets/uploaded/card-41.png.asset.json";
+import card42Asset from "@/assets/uploaded/card-42.png.asset.json";
+import card43Asset from "@/assets/uploaded/card-43.png.asset.json";
+import card44Asset from "@/assets/uploaded/card-44.png.asset.json";
+import card45Asset from "@/assets/uploaded/card-45.png.asset.json";
+import card46Asset from "@/assets/uploaded/card-46.png.asset.json";
+import card47Asset from "@/assets/uploaded/card-47.png.asset.json";
+import card48Asset from "@/assets/uploaded/card-48.png.asset.json";
+import card49Asset from "@/assets/uploaded/card-49.png.asset.json";
+import card50Asset from "@/assets/uploaded/card-50.png.asset.json";
+import card51Asset from "@/assets/uploaded/card-51.png.asset.json";
 
 export type SpreadId = "daily" | "three" | "either";
 export type CardState = "正位" | "逆位";
