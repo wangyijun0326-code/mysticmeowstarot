@@ -360,9 +360,9 @@ const uploadedCardFrontPaths: Partial<Record<number, string>> = {
 };
 
 export function getCardBackPath() {
-  return "/cat_tarot_78_single_cards/back.png";
+  return "/assets/back.png";
 }
 
 export function getCardFrontPath(cardNumber: number) {
-  return uploadedCardFrontPaths[cardNumber] ?? `/cat_tarot_78_single_cards/${cardNumber}.png`;
+  return `/assets/${cardNumber}.png`;
 }

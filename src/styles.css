@@ -91,8 +91,8 @@
   --gold-soft: oklch(0.72 0.1 82 / 70%);
   --plum: oklch(0.23 0.06 315 / 78%);
   --shadow: oklch(0.03 0.01 300 / 72%);
-  --font-display: "Cinzel", serif;
-  --font-body: "Cormorant Garamond", serif;
+  --font-display: "Cinzel", "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-body: "Noto Serif SC", "Cormorant Garamond", "Songti SC", "STSong", serif;
   --glow-soft: color-mix(in oklab, var(--gold) 30%, transparent);
   --glow-strong: color-mix(in oklab, var(--gold) 72%, transparent);
 }
