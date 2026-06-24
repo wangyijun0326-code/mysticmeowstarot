@@ -274,14 +274,16 @@
 
 .sm-shuffle-controls {
   position: absolute;
-  right: 2.5%;
-  bottom: 4%;
+  left: 50%;
+  bottom: 3%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.5rem;
-  max-width: 38%;
-  text-align: right;
+  max-width: 70%;
+  text-align: center;
+  pointer-events: none;
 }
 
 .sm-cam {
