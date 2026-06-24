@@ -303,6 +303,16 @@ const uploadedCardFrontPaths: Partial<Record<number, string>> = {
   49: card49Asset.url,
   50: card50Asset.url,
   51: card51Asset.url,
+  52: card52Asset.url,
+  53: card53Asset.url,
+  54: card54Asset.url,
+  55: card55Asset.url,
+  56: card56Asset.url,
+  57: card57Asset.url,
+  58: card58Asset.url,
+  59: card59Asset.url,
+  60: card60Asset.url,
+  61: card61Asset.url,
 };
 
 export function getCardBackPath() {
