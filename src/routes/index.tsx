@@ -69,7 +69,7 @@ function Index() {
   const isDrawComplete = requiredCount > 0 && drawnCards.length === requiredCount;
 
   const railDeck = useMemo(
-    () => deck.filter((card) => !selectedIds.includes(card.instanceId)).slice(0, 16),
+    () => deck.filter((card) => !selectedIds.includes(card.instanceId)),
     [deck, selectedIds],
   );
 
@@ -78,7 +78,9 @@ function Index() {
     if (gameState === "MENU") return assetUrl("menu.png");
     if (gameState === "SPREAD_SELECTION") return assetUrl("spreads.png");
     if (gameState === "DRAWING" && spreadId) {
-      return assetUrl(successFlash ? SPREAD_ASSETS[spreadId].success : SPREAD_ASSETS[spreadId].draw);
+      // Drawing uses a real DOM layout (slots + horizontal pool), not a full
+      // screenshot background. Only flash the "success" art when complete.
+      return successFlash ? assetUrl(SPREAD_ASSETS[spreadId].success) : null;
     }
     if (gameState === "REVEAL" && spreadId && !revealed) {
       return assetUrl(SPREAD_ASSETS[spreadId].reversal);
@@ -561,7 +563,9 @@ function DrawingStage({
       }
 
       if (phase === "idle") {
-        if (p.down && now > cooldownUntil) {
+        // Mouse drag is handled by Framer Motion drag below; the pointer loop
+        // only drives the hand-gesture (pinch) flow.
+        if (p.source === "hand" && p.down && now > cooldownUntil) {
           const card = findCardAt(p.x, p.y);
           if (card) {
             phase = "pressing";
@@ -610,76 +614,91 @@ function DrawingStage({
     return () => cancelAnimationFrame(raf);
   }, [pointerRef, onDraw]);
 
+  const spread = SPREADS[spreadId];
+
   return (
     <motion.div
-      className="sm-layer"
+      className="sm-layer sm-draw"
       ref={stageRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Drawn cards resting in their slots (face down) */}
-      {slots.map((slot, index) => {
-        const card = drawnCards[index];
-        const isNext = index === drawnCards.length;
-        return (
-          <div
-            key={index}
-            className={cn("sm-slot", isNext && !locked && "is-target")}
-            style={{ left: slot.left, top: slot.top }}
-          >
-            {card && (
-              <motion.img
-                src={BACK_SRC}
-                alt="已抽取的牌背面"
-                draggable={false}
-                initial={{ opacity: 0, y: 60, scale: 0.7 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={spring}
-              />
-            )}
-          </div>
-        );
-      })}
-
-      {/* Interactive deck rail — selected via pinch/press, no hover trigger */}
-      {!locked && (
-        <div className="sm-deck">
-          {railDeck.map((card) => {
-            const isPressing = pressId === card.instanceId;
-            const isGrabbed = grabbed?.instanceId === card.instanceId;
+      {/* ---------- Top zone: spread slots (dashed empty placeholders) ---------- */}
+      <div className="sm-draw-top">
+        <div className="sm-slots">
+          {slots.map((_, index) => {
+            const card = drawnCards[index];
+            const isNext = index === drawnCards.length;
             return (
-              <div
-                key={card.instanceId}
-                ref={(el) => {
-                  if (el) cardRefs.current.set(card.instanceId, el);
-                  else cardRefs.current.delete(card.instanceId);
-                }}
-                className={cn(
-                  "sm-deck-card",
-                  isPressing && "is-selected",
-                  isGrabbed && "is-grabbed",
+              <div key={index} className={cn("sm-slot2", isNext && !locked && "is-target")}>
+                {card ? (
+                  <motion.img
+                    src={BACK_SRC}
+                    alt="已抽取的牌背面"
+                    draggable={false}
+                    initial={{ opacity: 0, y: 80, scale: 0.6 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={spring}
+                  />
+                ) : (
+                  <span className="sm-slot2-label">{index + 1}</span>
                 )}
-                data-gesture-ignore
-              >
-                <img src={BACK_SRC} alt="" draggable={false} />
               </div>
             );
           })}
         </div>
-      )}
-
-      {/* Floating card that follows the pointer while dragging */}
-      <div ref={floatRef} className={cn("sm-drag-card", grabbed && "is-active")}>
-        {grabbed && <img src={BACK_SRC} alt="" draggable={false} />}
-      </div>
-
-      <div className="sm-shuffle-controls">
         <p className="sm-status">
           {locked
             ? "牌阵已成，正在召唤……"
-            : "在牌上捏合并停留 0.5 秒选中，拖到上方槽位松手即可；拖回底部撤销"}
+            : `向上拖动卡牌放入空槽（捏合并上移亦可） · ${drawnCards.length}/${slots.length}`}
         </p>
+      </div>
+
+      {/* ---------- Bottom zone: single-row horizontal card pool ---------- */}
+      {!locked && (
+        <div className="sm-pool-wrap" aria-label={`${spread.title} 牌堆`}>
+          <div className="sm-pool">
+            {railDeck.map((card) => {
+              const isPressing = pressId === card.instanceId;
+              const isGrabbed = grabbed?.instanceId === card.instanceId;
+              return (
+                <motion.div
+                  key={card.instanceId}
+                  layout
+                  ref={(el) => {
+                    if (el) cardRefs.current.set(card.instanceId, el);
+                    else cardRefs.current.delete(card.instanceId);
+                  }}
+                  className={cn(
+                    "sm-pool-card",
+                    isPressing && "is-selected",
+                    isGrabbed && "is-grabbed",
+                  )}
+                  data-gesture-ignore
+                  drag="y"
+                  dragSnapToOrigin
+                  dragConstraints={{ top: -600, bottom: 0 }}
+                  dragElastic={0.25}
+                  whileDrag={{ scale: 1.14, zIndex: 60 }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.y < -90) onDraw(card);
+                  }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                >
+                  <img src={BACK_SRC} alt="" draggable={false} />
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Floating card that follows the hand while pinch-dragging */}
+      <div ref={floatRef} className={cn("sm-drag-card", grabbed && "is-active")}>
+        {grabbed && <img src={BACK_SRC} alt="" draggable={false} />}
       </div>
     </motion.div>
   );
