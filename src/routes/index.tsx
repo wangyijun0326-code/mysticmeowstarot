@@ -441,6 +441,7 @@ function RevealBackOverlay({ onReveal }: { onReveal: () => void }) {
       type="button"
       className="sm-reveal-hit"
       onClick={onReveal}
+      data-gesture-swipe
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -451,11 +452,12 @@ function RevealBackOverlay({ onReveal }: { onReveal: () => void }) {
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
       >
-        TAP TO REVEAL
+        横扫或捏合翻牌
       </motion.span>
     </motion.button>
   );
 }
+
 
 /* --------------------------------------------------------- REVEAL RESULT */
 
