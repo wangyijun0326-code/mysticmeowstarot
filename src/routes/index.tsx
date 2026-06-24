@@ -264,10 +264,8 @@ function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
 /* --------------------------------------------------------------- SHUFFLE */
 
 function ShuffleOverlay({ onDone }: { onDone: () => void }) {
-  const [handMode, setHandMode] = useState(false);
-  const { videoRef, status, cursor } = useHandTracking(handMode);
+  const { cursorRef, status, enabled } = useGesture();
   const [shuffling, setShuffling] = useState(false);
-  const pointsRef = useRef<Array<{ x: number; y: number; t: number }>>([]);
   const doneRef = useRef(false);
 
   const startShuffle = useCallback(() => {
@@ -277,36 +275,41 @@ function ShuffleOverlay({ onDone }: { onDone: () => void }) {
     window.setTimeout(onDone, 1500);
   }, [onDone]);
 
-  // Detect a circular "wash" motion of the hand over the pile region.
+  // Detect a circular "wash" motion from the global hand cursor (搓牌).
   useEffect(() => {
-    if (!handMode || !cursor.active || doneRef.current) return;
-    const inPile = cursor.x > 0.06 && cursor.x < 0.94 && cursor.y > 0.34 && cursor.y < 0.92;
-    if (!inPile) {
-      pointsRef.current = [];
-      return;
-    }
-    const now = performance.now();
-    const pts = pointsRef.current;
-    pts.push({ x: cursor.x, y: cursor.y, t: now });
-    while (pts.length && now - pts[0].t > 1600) pts.shift();
-    if (pts.length > 10) {
-      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-      let total = 0;
-      for (let i = 1; i < pts.length; i += 1) {
-        const a1 = Math.atan2(pts[i - 1].y - cy, pts[i - 1].x - cx);
-        const a2 = Math.atan2(pts[i].y - cy, pts[i].x - cx);
-        let d = a2 - a1;
-        if (d > Math.PI) d -= 2 * Math.PI;
-        if (d < -Math.PI) d += 2 * Math.PI;
-        total += d;
+    let raf = 0;
+    const pts: Array<{ x: number; y: number; t: number }> = [];
+    const loop = () => {
+      const cursor = cursorRef.current;
+      if (cursor?.active && !doneRef.current) {
+        const now = performance.now();
+        pts.push({ x: cursor.x, y: cursor.y, t: now });
+        while (pts.length && now - pts[0].t > 1600) pts.shift();
+        if (pts.length > 12) {
+          const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+          const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+          let total = 0;
+          for (let i = 1; i < pts.length; i += 1) {
+            const a1 = Math.atan2(pts[i - 1].y - cy, pts[i - 1].x - cx);
+            const a2 = Math.atan2(pts[i].y - cy, pts[i].x - cx);
+            let d = a2 - a1;
+            if (d > Math.PI) d -= 2 * Math.PI;
+            if (d < -Math.PI) d += 2 * Math.PI;
+            total += d;
+          }
+          if (Math.abs(total) > Math.PI * 2.2) {
+            pts.length = 0;
+            startShuffle();
+          }
+        }
+      } else {
+        pts.length = 0;
       }
-      if (Math.abs(total) > Math.PI * 2.2) {
-        pointsRef.current = [];
-        startShuffle();
-      }
-    }
-  }, [cursor, handMode, startShuffle]);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [cursorRef, startShuffle]);
 
   return (
     <motion.div
@@ -328,7 +331,7 @@ function ShuffleOverlay({ onDone }: { onDone: () => void }) {
         )}
       </AnimatePresence>
 
-      {/* Tap-to-shuffle paw hotspot baked into wash.png */}
+      {/* Tap / dwell / pinch-to-shuffle paw hotspot baked into wash.png */}
       <Hotspot
         label="洗牌"
         left="50%"
@@ -339,54 +342,32 @@ function ShuffleOverlay({ onDone }: { onDone: () => void }) {
         round
       />
 
-      {/* Virtual cursor from hand tracking */}
-      {handMode && cursor.active && (
-        <motion.div
-          className="sm-cursor"
-          style={{ left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }}
-          animate={{ scale: shuffling ? 1.4 : 1 }}
-        />
-      )}
-
-      {/* Gesture control panel */}
+      {/* Shuffle hint */}
       <div className="sm-shuffle-controls">
-        <video
-          ref={videoRef}
-          className={cn("sm-cam", !handMode && "is-hidden")}
-          playsInline
-          muted
-        />
-        <button type="button" className="sm-pill" onClick={() => setHandMode((v) => !v)}>
-          {handMode ? "关闭手势" : "开启手势洗牌"}
-        </button>
-        <p className="sm-status">{handStatus(handMode, status, shuffling)}</p>
+        <p className="sm-status">{shuffleHint(enabled, status, shuffling)}</p>
       </div>
     </motion.div>
   );
 }
 
-function handStatus(
-  handMode: boolean,
-  status: ReturnType<typeof useHandTracking>["status"],
+function shuffleHint(
+  enabled: boolean,
+  status: ReturnType<typeof useGesture>["status"],
   shuffling: boolean,
 ) {
   if (shuffling) return "✦ 牌灵流动中……";
-  if (!handMode) return "点击爪印洗牌，或开启手势在牌堆上方画圈搓牌";
+  if (!enabled) return "点击爪印洗牌，或在左下角开启手势画圈搓牌";
   switch (status) {
-    case "requesting":
-      return "正在请求摄像头权限……";
-    case "loading":
-      return "正在载入手势模型……";
     case "tracking":
-      return "已连接：在牌堆上方用手画圈搓牌";
+      return "在牌堆上方用手画圈搓牌，或悬停爪印洗牌";
     case "denied":
-      return "摄像头被拒绝，可直接点击爪印洗牌";
     case "error":
-      return "手势不可用，可直接点击爪印洗牌";
+      return "摄像头不可用，可直接点击爪印洗牌";
     default:
-      return "准备中……";
+      return "手势准备中，可先点击爪印洗牌";
   }
 }
+
 
 /* --------------------------------------------------------------- DRAWING */
 
