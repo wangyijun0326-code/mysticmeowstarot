@@ -2,20 +2,22 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ReadingInput = z.object({
-  spread: z.string().min(1),
+  spread: z.string().min(1).max(100),
   cards: z
     .array(
       z.object({
-        position: z.string().min(1),
-        name: z.string().min(1),
+        position: z.string().min(1).max(50),
+        name: z.string().min(1).max(50),
         state: z.enum(["正位", "逆位"]),
       }),
     )
     .min(1)
     .max(5),
 });
+
 
 const ReadingOutput = z.object({
   summary: z.string(),
@@ -48,6 +50,7 @@ function extractJson(raw: string): unknown {
 }
 
 export const generateTarotReading = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ReadingInput.parse(input))
   .handler(async ({ data }) => {
     const lovableApiKey = process.env.LOVABLE_API_KEY;

@@ -174,7 +174,8 @@ function Index() {
       setReading(response);
       setStage("reading");
     } catch (error) {
-      setReadingError(error instanceof Error ? error.message : "解读生成失败");
+      console.error("Tarot reading generation failed:", error);
+      setReadingError("解读生成失败，请稍后再试");
       setStage("reading");
     } finally {
       setIsLoadingReading(false);
