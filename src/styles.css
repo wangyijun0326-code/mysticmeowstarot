@@ -365,7 +365,20 @@
   width: 9.5%;
   aspect-ratio: 1086 / 1448;
   z-index: 10;
-  filter: drop-shadow(0 12px 26px oklch(0.02 0.01 300 / 70%));
+  border-radius: 10px;
+  transition: box-shadow 0.25s ease;
+}
+
+.sm-slot.is-target {
+  box-shadow:
+    0 0 0 2px var(--gold-soft),
+    0 0 26px var(--glow-soft);
+  animation: slotPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes slotPulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--gold-soft), 0 0 16px var(--glow-soft); }
+  50% { box-shadow: 0 0 0 2px var(--gold), 0 0 34px var(--glow-strong); }
 }
 
 .sm-slot img {
@@ -373,6 +386,7 @@
   height: 100%;
   object-fit: contain;
   border-radius: 8px;
+  filter: drop-shadow(0 12px 26px oklch(0.02 0.01 300 / 60%));
 }
 
 .sm-deck {
@@ -397,7 +411,24 @@
   padding: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
+  cursor: grab;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.sm-deck-card.is-selected {
+  transform: translateY(-26px) scale(1.18);
+  z-index: 20;
+}
+
+.sm-deck-card.is-selected img {
+  filter: drop-shadow(0 14px 28px oklch(0.02 0.01 300 / 70%));
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+  border-radius: 8px;
+}
+
+.sm-deck-card.is-grabbed {
+  opacity: 0.25;
 }
 
 .sm-deck-card img {
@@ -407,6 +438,35 @@
   border-radius: 6px;
   filter: drop-shadow(0 8px 16px oklch(0.02 0.01 300 / 65%));
 }
+
+/* Floating card that follows the pointer while dragging */
+.sm-drag-card {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 80px;
+  margin-left: -40px;
+  margin-top: -56px;
+  aspect-ratio: 1086 / 1448;
+  z-index: 9000;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+}
+
+.sm-drag-card.is-active {
+  opacity: 1;
+}
+
+.sm-drag-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  filter: drop-shadow(0 18px 32px oklch(0.02 0.01 300 / 75%));
+}
+
+
 
 /* ----- Reveal (tap to flip) ----- */
 .sm-reveal-hit {
