@@ -69,6 +69,13 @@ import card68Asset from "@/assets/uploaded/card-68.png.asset.json";
 import card69Asset from "@/assets/uploaded/card-69.png.asset.json";
 import card70Asset from "@/assets/uploaded/card-70.png.asset.json";
 import card71Asset from "@/assets/uploaded/card-71.png.asset.json";
+import card72Asset from "@/assets/uploaded/card-72.png.asset.json";
+import card73Asset from "@/assets/uploaded/card-73.png.asset.json";
+import card74Asset from "@/assets/uploaded/card-74.png.asset.json";
+import card75Asset from "@/assets/uploaded/card-75.png.asset.json";
+import card76Asset from "@/assets/uploaded/card-76.png.asset.json";
+import card77Asset from "@/assets/uploaded/card-77.png.asset.json";
+import card78Asset from "@/assets/uploaded/card-78.png.asset.json";
 
 export type SpreadId = "daily" | "three" | "either";
 export type CardState = "正位" | "逆位";
@@ -333,6 +340,13 @@ const uploadedCardFrontPaths: Partial<Record<number, string>> = {
   69: card69Asset.url,
   70: card70Asset.url,
   71: card71Asset.url,
+  72: card72Asset.url,
+  73: card73Asset.url,
+  74: card74Asset.url,
+  75: card75Asset.url,
+  76: card76Asset.url,
+  77: card77Asset.url,
+  78: card78Asset.url,
 };
 
 export function getCardBackPath() {
