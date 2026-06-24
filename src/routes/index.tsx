@@ -8,6 +8,13 @@ import washAsset from "@/assets/tarot-wash.png.asset.json";
 import oneCardAsset from "@/assets/tarot-one-card.png.asset.json";
 import oneCardSuccessAsset from "@/assets/tarot-one-card-success.png.asset.json";
 import oneCardRevealAsset from "@/assets/tarot-one-card-reversal.png.asset.json";
+import threeCardsAsset from "@/assets/uploaded/three_cards.png.asset.json";
+import threeCardsSuccessAsset from "@/assets/uploaded/three_cards_success.png.asset.json";
+import threeCardsRevealAsset from "@/assets/uploaded/three_cards_reversal.png.asset.json";
+import threeCardsEndAsset from "@/assets/uploaded/three-end.png.asset.json";
+import fiveCardsAsset from "@/assets/uploaded/five_cards.png.asset.json";
+import fiveCardsSuccessAsset from "@/assets/uploaded/five_cards_success.png.asset.json";
+import fiveCardsEndAsset from "@/assets/uploaded/five-end.png.asset.json";
 import backAsset from "@/assets/tarot-back.png.asset.json";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,9 +60,24 @@ const PREVIEW_BACKGROUNDS = {
   home: menuAsset.url,
   spreads: spreadsAsset.url,
   shuffle: washAsset.url,
-  draw: oneCardAsset.url,
-  drawFilled: oneCardSuccessAsset.url,
-  reveal: oneCardRevealAsset.url,
+  daily: {
+    draw: oneCardAsset.url,
+    drawFilled: oneCardSuccessAsset.url,
+    reveal: oneCardRevealAsset.url,
+    reading: oneCardRevealAsset.url,
+  },
+  three: {
+    draw: threeCardsAsset.url,
+    drawFilled: threeCardsSuccessAsset.url,
+    reveal: threeCardsRevealAsset.url,
+    reading: threeCardsEndAsset.url,
+  },
+  either: {
+    draw: fiveCardsAsset.url,
+    drawFilled: fiveCardsSuccessAsset.url,
+    reveal: fiveCardsSuccessAsset.url,
+    reading: fiveCardsEndAsset.url,
+  },
 };
 
 function Index() {
@@ -719,9 +741,14 @@ function getPreviewBackground(stage: Stage, spreadId: SpreadId | null, hasDrawnC
   if (stage === "home") return PREVIEW_BACKGROUNDS.home;
   if (stage === "spreads") return PREVIEW_BACKGROUNDS.spreads;
   if (stage === "shuffle") return PREVIEW_BACKGROUNDS.shuffle;
-  if (stage === "draw") return hasDrawnCard ? PREVIEW_BACKGROUNDS.drawFilled : PREVIEW_BACKGROUNDS.draw;
-  if (stage === "reveal" || stage === "reading") return PREVIEW_BACKGROUNDS.reveal;
-  return spreadId ? PREVIEW_BACKGROUNDS.draw : PREVIEW_BACKGROUNDS.home;
+
+  const spreadBackgrounds = spreadId ? PREVIEW_BACKGROUNDS[spreadId] : PREVIEW_BACKGROUNDS.daily;
+
+  if (stage === "draw") return hasDrawnCard ? spreadBackgrounds.drawFilled : spreadBackgrounds.draw;
+  if (stage === "reveal") return spreadBackgrounds.reveal;
+  if (stage === "reading") return spreadBackgrounds.reading;
+
+  return PREVIEW_BACKGROUNDS.home;
 }
 
 function applyFallback(event: React.SyntheticEvent<HTMLImageElement>) {

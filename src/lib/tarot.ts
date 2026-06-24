@@ -1,5 +1,10 @@
+import card1Asset from "@/assets/uploaded/card-1.png.asset.json";
+import card2Asset from "@/assets/uploaded/card-2.png.asset.json";
+import card3Asset from "@/assets/uploaded/card-3.png.asset.json";
+
 export type SpreadId = "daily" | "three" | "either";
 export type CardState = "正位" | "逆位";
+
 
 export interface TarotCardMeta {
   number: number;
@@ -188,10 +193,16 @@ export function getStageReferencePath(stage: "home" | "spreads" | "shuffle" | "d
     : "/WEB UI DESIGN2/five cards reversal.png";
 }
 
+const uploadedCardFrontPaths: Partial<Record<number, string>> = {
+  1: card1Asset.url,
+  2: card2Asset.url,
+  3: card3Asset.url,
+};
+
 export function getCardBackPath() {
   return "/cat_tarot_78_single_cards/back.png";
 }
 
 export function getCardFrontPath(cardNumber: number) {
-  return `/cat_tarot_78_single_cards/${cardNumber}.png`;
+  return uploadedCardFrontPaths[cardNumber] ?? `/cat_tarot_78_single_cards/${cardNumber}.png`;
 }
