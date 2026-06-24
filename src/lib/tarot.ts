@@ -59,6 +59,16 @@ import card58Asset from "@/assets/uploaded/card-58.png.asset.json";
 import card59Asset from "@/assets/uploaded/card-59.png.asset.json";
 import card60Asset from "@/assets/uploaded/card-60.png.asset.json";
 import card61Asset from "@/assets/uploaded/card-61.png.asset.json";
+import card62Asset from "@/assets/uploaded/card-62.png.asset.json";
+import card63Asset from "@/assets/uploaded/card-63.png.asset.json";
+import card64Asset from "@/assets/uploaded/card-64.png.asset.json";
+import card65Asset from "@/assets/uploaded/card-65.png.asset.json";
+import card66Asset from "@/assets/uploaded/card-66.png.asset.json";
+import card67Asset from "@/assets/uploaded/card-67.png.asset.json";
+import card68Asset from "@/assets/uploaded/card-68.png.asset.json";
+import card69Asset from "@/assets/uploaded/card-69.png.asset.json";
+import card70Asset from "@/assets/uploaded/card-70.png.asset.json";
+import card71Asset from "@/assets/uploaded/card-71.png.asset.json";
 
 export type SpreadId = "daily" | "three" | "either";
 export type CardState = "正位" | "逆位";
@@ -313,6 +323,16 @@ const uploadedCardFrontPaths: Partial<Record<number, string>> = {
   59: card59Asset.url,
   60: card60Asset.url,
   61: card61Asset.url,
+  62: card62Asset.url,
+  63: card63Asset.url,
+  64: card64Asset.url,
+  65: card65Asset.url,
+  66: card66Asset.url,
+  67: card67Asset.url,
+  68: card68Asset.url,
+  69: card69Asset.url,
+  70: card70Asset.url,
+  71: card71Asset.url,
 };
 
 export function getCardBackPath() {
