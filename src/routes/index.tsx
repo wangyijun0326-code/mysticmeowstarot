@@ -1,22 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Stars, RotateCcw, WandSparkles } from "lucide-react";
-import menuAsset from "@/assets/tarot-menu.png.asset.json";
-import spreadsAsset from "@/assets/tarot-spreads.png.asset.json";
-import washAsset from "@/assets/tarot-wash.png.asset.json";
-import oneCardAsset from "@/assets/tarot-one-card.png.asset.json";
-import oneCardSuccessAsset from "@/assets/tarot-one-card-success.png.asset.json";
-
-import threeCardsAsset from "@/assets/uploaded/three_cards.png.asset.json";
-import threeCardsSuccessAsset from "@/assets/uploaded/three_cards_success.png.asset.json";
-import threeCardsRevealAsset from "@/assets/uploaded/three_cards_reversal.png.asset.json";
-import threeCardsEndAsset from "@/assets/uploaded/three-end.png.asset.json";
-import fiveCardsAsset from "@/assets/uploaded/five_cards.png.asset.json";
-import fiveCardsSuccessAsset from "@/assets/uploaded/five_cards_success.png.asset.json";
-import fiveCardsEndAsset from "@/assets/uploaded/five-end.png.asset.json";
-import fiveCardsRevealAsset from "@/assets/uploaded/five_cards_reversal.png.asset.json";
-import oneCardEndAsset from "@/assets/uploaded/one-end.png.asset.json";
+import { Sparkles, Stars, RotateCcw, WandSparkles, Hand, CameraOff } from "lucide-react";
 import backAsset from "@/assets/tarot-back.png.asset.json";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,11 +10,11 @@ import {
   createSessionDeck,
   getCardBackPath,
   getCardFrontPath,
-  getStageReferencePath,
   type DrawnCard,
   type SpreadId,
 } from "@/lib/tarot";
 import { generateTarotReading } from "@/lib/tarot-reading.functions";
+import { useHandTracking } from "@/hooks/use-hand-tracking";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -38,12 +23,12 @@ export const Route = createFileRoute("/")({
       { title: "猫咪塔罗 Web App" },
       {
         name: "description",
-        content: "沉浸式猫咪塔罗抽牌体验，含洗牌、揭牌仪式与 AI 深度解读。",
+        content: "沉浸式猫咪塔罗抽牌体验，含手势洗牌、揭牌仪式与 AI 中性深度解读。",
       },
       { property: "og:title", content: "猫咪塔罗 Web App" },
       {
         property: "og:description",
-        content: "沉浸式猫咪塔罗抽牌体验，含洗牌、揭牌仪式与 AI 深度解读。",
+        content: "沉浸式猫咪塔罗抽牌体验，含手势洗牌、揭牌仪式与 AI 中性深度解读。",
       },
     ],
     links: [{ rel: "canonical", href: "/" }],
@@ -58,35 +43,10 @@ type SessionDeckCard = ReturnType<typeof createSessionDeck>[number];
 const spring = { type: "spring", stiffness: 180, damping: 22, mass: 0.8 } as const;
 const floatSpring = { type: "spring", stiffness: 220, damping: 18, mass: 0.7 } as const;
 
-const PREVIEW_BACKGROUNDS = {
-  home: menuAsset.url,
-  spreads: spreadsAsset.url,
-  shuffle: washAsset.url,
-  daily: {
-    draw: oneCardAsset.url,
-    drawFilled: oneCardSuccessAsset.url,
-    reveal: oneCardEndAsset.url,
-    reading: oneCardEndAsset.url,
-  },
-  three: {
-    draw: threeCardsAsset.url,
-    drawFilled: threeCardsSuccessAsset.url,
-    reveal: threeCardsRevealAsset.url,
-    reading: threeCardsEndAsset.url,
-  },
-  either: {
-    draw: fiveCardsAsset.url,
-    drawFilled: fiveCardsSuccessAsset.url,
-    reveal: fiveCardsRevealAsset.url,
-    reading: fiveCardsEndAsset.url,
-  },
-};
-
 function Index() {
   const [stage, setStage] = useState<Stage>("home");
   const [spreadId, setSpreadId] = useState<SpreadId | null>(null);
   const [deck, setDeck] = useState<SessionDeckCard[]>(() => createSessionDeck());
-  const [dragEnergy, setDragEnergy] = useState(0);
   const [drawnCards, setDrawnCards] = useState<DrawnCard[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [revealIndex, setRevealIndex] = useState<number>(-1);
@@ -166,6 +126,7 @@ function Index() {
   };
 
   const finishShuffle = () => {
+    setDeck(createSessionDeck());
     setStage("draw");
   };
 
@@ -234,39 +195,20 @@ function Index() {
     setTypedCards({});
     setReadingError(null);
     setIsLoadingReading(false);
-    setDragEnergy(0);
     setStage("home");
   };
-
-  const previewBackground = getPreviewBackground(stage, spreadId, drawnCards.length > 0);
-  const previewReference = getStageReferencePath(
-    stage === "reading" ? "reveal" : stage === "reveal" ? "reveal" : stage === "draw" ? "draw" : stage,
-    spreadId,
-  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="tarot-page-shell">
         <div className="tarot-stage-frame">
-          <ReferenceBackdrop src={previewBackground} stage={stage} />
-          <div className="tarot-vignette" aria-hidden="true" />
-          <div className="tarot-noise" aria-hidden="true" />
-          <TarotBorder />
-
           <div className="tarot-stage-content">
             <TarotNav />
 
             <AnimatePresence mode="wait">
               {stage === "home" && <HomeStage key="home" onStart={startJourney} />}
               {stage === "spreads" && <SpreadStage key="spreads" onChoose={chooseSpread} />}
-              {stage === "shuffle" && (
-                <ShuffleStage
-                  key="shuffle"
-                  dragEnergy={dragEnergy}
-                  onDragEnergy={setDragEnergy}
-                  onDone={finishShuffle}
-                />
-              )}
+              {stage === "shuffle" && <ShuffleStage key="shuffle" onDone={finishShuffle} />}
               {(stage === "draw" || stage === "reveal" || stage === "reading") && spread && (
                 <DrawStage
                   key="draw-stage"
@@ -290,11 +232,6 @@ function Index() {
             </AnimatePresence>
           </div>
         </div>
-
-        <footer className="tarot-footer-meta">
-          <span>参考图路径预留：{previewReference}</span>
-          <span>卡背：/cat_tarot_78_single_cards/back.png</span>
-        </footer>
       </main>
     </div>
   );
@@ -309,10 +246,13 @@ function HomeStage({ onStart }: { onStart: () => void }) {
       exit={{ opacity: 0, y: -24 }}
       transition={spring}
     >
+      <div className="tarot-home-orb" aria-hidden="true">
+        <span className="tarot-home-moon">☾</span>
+      </div>
       <div className="tarot-home-title-wrap">
-        <div className="tarot-home-sign">
-          <h1 className="tarot-home-title">TAROT CARD READINGS</h1>
-        </div>
+        <p className="tarot-home-kicker">CAT TAROT</p>
+        <h1 className="tarot-home-title">TAROT CARD READINGS</h1>
+        <p className="tarot-home-sub">让猫咪牌灵，为你照见此刻的方向</p>
       </div>
 
       <div className="tarot-home-actions">
@@ -361,21 +301,54 @@ function SpreadStage({ onChoose }: { onChoose: (spread: SpreadId) => void }) {
   );
 }
 
-function ShuffleStage({
-  dragEnergy,
-  onDragEnergy,
-  onDone,
-}: {
-  dragEnergy: number;
-  onDragEnergy: (value: number) => void;
-  onDone: () => void;
-}) {
-  const scatter = Array.from({ length: 18 }, (_, index) => ({
-    id: index,
-    rotate: (index % 6) * 5 - 12,
-    x: ((index % 6) - 2.5) * 88,
-    y: Math.floor(index / 6) * 22 - 24,
-  }));
+const PILE_SIZE = 78;
+
+function ShuffleStage({ onDone }: { onDone: () => void }) {
+  const [handMode, setHandMode] = useState(false);
+  const { videoRef, status, cursor } = useHandTracking(handMode);
+  const pileRef = useRef<HTMLDivElement | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [energy, setEnergy] = useState(0);
+
+  // Map the virtual cursor onto the pile and pick the closest card.
+  useEffect(() => {
+    if (!handMode || !cursor.active) {
+      setHoverIndex(null);
+      setEnergy(0);
+      return;
+    }
+    const node = pileRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    const frame = node.closest(".tarot-stage-frame")?.getBoundingClientRect();
+    if (!frame) return;
+    const px = frame.left + cursor.x * frame.width;
+    const py = frame.top + cursor.y * frame.height;
+    const within =
+      px >= rect.left - 60 && px <= rect.right + 60 && py >= rect.top - 80 && py <= rect.bottom + 80;
+    if (!within) {
+      setHoverIndex(null);
+      setEnergy((e) => Math.max(0, e - 0.15));
+      return;
+    }
+    const ratio = Math.min(1, Math.max(0, (px - rect.left) / rect.width));
+    setHoverIndex(Math.round(ratio * (PILE_SIZE - 1)));
+    setEnergy(1);
+  }, [cursor, handMode]);
+
+  const cards = useMemo(
+    () =>
+      Array.from({ length: PILE_SIZE }, (_, index) => ({
+        id: index,
+        // base fan angle across the arc
+        angle: (index / (PILE_SIZE - 1) - 0.5) * 86,
+      })),
+    [],
+  );
+
+  const cursorStyle = cursor.active
+    ? { left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }
+    : { left: "-100%", top: "-100%" };
 
   return (
     <motion.section
@@ -385,62 +358,85 @@ function ShuffleStage({
       exit={{ opacity: 0, y: -18 }}
       transition={spring}
     >
-      <StageHeading title="SHUFFLE" subtitle="Let the cards wander." />
+      <StageHeading title="SHUFFLE" subtitle="挥动手指拂过牌堆，让 78 张牌随你流动" />
 
-      <div className="tarot-shuffle-pile-wrap">
-        <motion.div
-          className="tarot-shuffle-pile"
-          drag="x"
-          dragConstraints={{ left: -160, right: 160 }}
-          dragElastic={0.18}
-          onDrag={(_, info) => onDragEnergy(Math.min(1, Math.abs(info.offset.x) / 150))}
-          onDragEnd={() => onDragEnergy(0)}
-          whileTap={{ scale: 1.02 }}
-        >
-          {scatter.map((card, index) => (
-            <motion.div
-              key={card.id}
-              className="tarot-shuffle-card"
-              animate={{
-                x: card.x * (0.25 + dragEnergy * 0.85),
-                y: card.y * (0.3 + dragEnergy * 0.9),
-                rotate: card.rotate * (0.3 + dragEnergy * 0.95),
-              }}
-              transition={spring}
-              style={{ zIndex: scatter.length - index }}
-            >
-              <TarotBackCard alt="洗牌中的塔罗牌背面" />
-            </motion.div>
-          ))}
-          <div className="tarot-shuffle-stars" aria-hidden="true">
-            {Array.from({ length: 18 }, (_, index) => (
-              <motion.span
-                key={index}
-                className="tarot-star-dot"
+      <div className="tarot-shuffle-stage-area">
+        <div className="tarot-shuffle-fan" ref={pileRef}>
+          {cards.map((card) => {
+            const distance = hoverIndex === null ? 99 : Math.abs(card.id - hoverIndex);
+            const near = distance <= 4;
+            const lift = near ? (5 - distance) * 12 : 0;
+            const spreadOut = 0.55 + energy * 0.45;
+            return (
+              <motion.div
+                key={card.id}
+                className={cn("tarot-fan-card", near && "is-hovered")}
+                style={{ zIndex: near ? 200 - distance : card.id }}
                 animate={{
-                  opacity: [0.15, 0.9, 0.2],
-                  x: [0, (index % 2 === 0 ? 12 : -12) * dragEnergy, 0],
-                  y: [0, ((index % 3) - 1) * 16 * dragEnergy, 0],
+                  rotate: card.angle * spreadOut,
+                  y: -lift + Math.sin(card.angle * 0.05) * 6,
+                  scale: near ? 1.06 : 1,
                 }}
-                transition={{ duration: 1.6 + index * 0.04, repeat: Number.POSITIVE_INFINITY }}
-                style={{ left: `${8 + (index % 6) * 16}%`, top: `${12 + Math.floor(index / 6) * 24}%` }}
-              />
-            ))}
-          </div>
-        </motion.div>
+                transition={floatSpring}
+              >
+                <TarotBackCard alt="洗牌中的塔罗牌背面" />
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {handMode && cursor.active && (
+          <motion.div
+            className="tarot-hand-cursor"
+            style={cursorStyle}
+            animate={{ scale: energy > 0.2 ? 1.25 : 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          />
+        )}
       </div>
 
-      <div className="tarot-stage-bottom">
-        <motion.div className="tarot-shuffle-prompt" animate={{ scale: dragEnergy > 0.1 ? 1.04 : 1 }}>
-          <span className="tarot-paw-icon">🐾</span>
-          <span>TAP TO SHUFFLE</span>
-        </motion.div>
-        <Button variant="ghost" className="tarot-primary-action" onClick={onDone}>
-          洗牌完成
-        </Button>
+      <div className="tarot-shuffle-controls">
+        <video
+          ref={videoRef}
+          className={cn("tarot-hand-preview", !handMode && "is-hidden")}
+          playsInline
+          muted
+        />
+        <div className="tarot-shuffle-buttons">
+          <Button
+            variant="ghost"
+            className="tarot-primary-action"
+            onClick={() => setHandMode((value) => !value)}
+          >
+            {handMode ? <CameraOff className="size-4" /> : <Hand className="size-4" />}
+            {handMode ? "关闭手势" : "开启手势洗牌"}
+          </Button>
+          <Button variant="ghost" className="tarot-primary-action" onClick={onDone}>
+            洗牌完成
+          </Button>
+        </div>
+        <p className="tarot-hand-status">{handStatusLabel(handMode, status)}</p>
       </div>
     </motion.section>
   );
+}
+
+function handStatusLabel(handMode: boolean, status: ReturnType<typeof useHandTracking>["status"]) {
+  if (!handMode) return "点击右键拖拽或开启摄像头，用食指拂过牌堆洗牌";
+  switch (status) {
+    case "requesting":
+      return "正在请求摄像头权限……";
+    case "loading":
+      return "正在载入手势模型……";
+    case "tracking":
+      return "已连接：移动食指划过牌堆";
+    case "denied":
+      return "摄像头权限被拒绝，可直接点击「洗牌完成」";
+    case "error":
+      return "手势追踪不可用，可直接点击「洗牌完成」";
+    default:
+      return "准备中……";
+  }
 }
 
 function DrawStage({
@@ -495,7 +491,6 @@ function DrawStage({
           {slots.map((slot, index) => {
             const card = drawnCards[index];
             const revealed = revealIndex >= index;
-            const isSingleFloating = spreadId === "daily" && !isRevealStage;
             const shouldGlow = isRevealGlowVisible && revealIndex === index;
 
             return (
@@ -516,10 +511,7 @@ function DrawStage({
                     style={{ transformStyle: "preserve-3d" }}
                   >
                     <div className="tarot-card-face tarot-card-face-back">
-                      <TarotBackCard
-                        alt={`${card.position} 的塔罗牌背面`}
-                        className={cn(isSingleFloating && "tarot-card-floating")}
-                      />
+                      <TarotBackCard alt={`${card.position} 的塔罗牌背面`} />
                     </div>
                     <div className="tarot-card-face tarot-card-face-front">
                       <TarotFrontCard
@@ -528,7 +520,14 @@ function DrawStage({
                         className={cn(card.state === "逆位" && "rotate-180")}
                       />
                     </div>
-                    {shouldGlow && <motion.div className="tarot-paw-burst" initial={{ opacity: 0, scale: 0.2 }} animate={{ opacity: [0, 1, 0], scale: [0.2, 1.1, 1.35] }} transition={{ duration: 0.7 }} />}
+                    {shouldGlow && (
+                      <motion.div
+                        className="tarot-paw-burst"
+                        initial={{ opacity: 0, scale: 0.2 }}
+                        animate={{ opacity: [0, 1, 0], scale: [0.2, 1.1, 1.35] }}
+                        transition={{ duration: 0.7 }}
+                      />
+                    )}
                   </motion.div>
                 )}
 
@@ -550,14 +549,17 @@ function DrawStage({
           <div className="tarot-bottom-drawer">
             <div className="tarot-drawer-arrow">‹</div>
             <div className="tarot-card-rail" role="list" aria-label="可选择的卡牌列表">
-              {bottomDeck.map((card, index) => (
+              {bottomDeck.map((card) => (
                 <motion.button
                   key={card.instanceId}
-                  layoutId={`card-${drawnCards.length === 0 ? index : card.instanceId}`}
                   type="button"
                   className="tarot-rail-card"
-                  whileHover={{ y: -10, scale: 1.05 }}
+                  drag
+                  dragSnapToOrigin
+                  dragElastic={0.4}
+                  whileHover={{ y: -12, scale: 1.06 }}
                   whileTap={{ scale: 0.98 }}
+                  whileDrag={{ scale: 1.1, zIndex: 50 }}
                   transition={floatSpring}
                   onClick={() => onDraw(card)}
                 >
@@ -577,14 +579,14 @@ function DrawStage({
             className="tarot-reveal-trigger"
             onClick={onReveal}
             initial={{ opacity: 0.3 }}
-            animate={{ opacity: [0.6, 1, 0.6], boxShadow: ["0 0 0 0 var(--glow-soft)", "0 0 36px 4px var(--glow-strong)", "0 0 0 0 var(--glow-soft)"] }}
+            animate={{ opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
           >
             <WandSparkles className="size-4" />
             TAP TO REVEAL
           </motion.button>
         ) : !isRevealStage ? (
-          <div className="tarot-guidance-line">Slide through the cards, then tap one to choose.</div>
+          <div className="tarot-guidance-line">拖动或点击下方牌堆，依次选出你的牌。</div>
         ) : null}
       </div>
 
@@ -650,17 +652,6 @@ function TarotNav() {
   );
 }
 
-function TarotBorder() {
-  return (
-    <div className="tarot-border" aria-hidden="true">
-      <span className="corner top-left" />
-      <span className="corner top-right" />
-      <span className="corner bottom-left" />
-      <span className="corner bottom-right" />
-    </div>
-  );
-}
-
 function PawButton({
   label,
   icon,
@@ -695,24 +686,6 @@ function PawButton({
   );
 }
 
-function ReferenceBackdrop({ src, stage }: { src: string; stage: Stage }) {
-  return (
-    <AnimatePresence mode="wait">
-      <motion.img
-        key={`${stage}-${src}`}
-        src={src}
-        alt=""
-        aria-hidden="true"
-        className="tarot-reference-backdrop"
-        initial={{ opacity: 0, scale: 1.02 }}
-        animate={{ opacity: 0.36, scale: 1 }}
-        exit={{ opacity: 0, scale: 1.01 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      />
-    </AnimatePresence>
-  );
-}
-
 function TarotBackCard({ alt, className }: { alt: string; className?: string }) {
   return (
     <img
@@ -722,6 +695,7 @@ function TarotBackCard({ alt, className }: { alt: string; className?: string }) 
       alt={alt}
       className={cn("tarot-card-image", className)}
       loading="lazy"
+      draggable={false}
     />
   );
 }
@@ -735,22 +709,9 @@ function TarotFrontCard({ cardNumber, alt, className }: { cardNumber: number; al
       alt={alt}
       className={cn("tarot-card-image", className)}
       loading="lazy"
+      draggable={false}
     />
   );
-}
-
-function getPreviewBackground(stage: Stage, spreadId: SpreadId | null, hasDrawnCard: boolean) {
-  if (stage === "home") return PREVIEW_BACKGROUNDS.home;
-  if (stage === "spreads") return PREVIEW_BACKGROUNDS.spreads;
-  if (stage === "shuffle") return PREVIEW_BACKGROUNDS.shuffle;
-
-  const spreadBackgrounds = spreadId ? PREVIEW_BACKGROUNDS[spreadId] : PREVIEW_BACKGROUNDS.daily;
-
-  if (stage === "draw") return hasDrawnCard ? spreadBackgrounds.drawFilled : spreadBackgrounds.draw;
-  if (stage === "reveal") return spreadBackgrounds.reveal;
-  if (stage === "reading") return spreadBackgrounds.reading;
-
-  return PREVIEW_BACKGROUNDS.home;
 }
 
 function applyFallback(event: React.SyntheticEvent<HTMLImageElement>) {
