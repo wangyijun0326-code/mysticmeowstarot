@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Sparkles, Stars, RotateCcw, WandSparkles, Hand, CameraOff } from "lucide-react";
-import backAsset from "@/assets/tarot-back.png.asset.json";
-import { Button } from "@/components/ui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RotateCcw } from "lucide-react";
 import {
   SPREADS,
+  SPREAD_ASSETS,
   SLOT_LAYOUTS,
   createSessionDeck,
-  getCardBackPath,
   getCardFrontPath,
   type DrawnCard,
   type SpreadId,
@@ -36,693 +34,560 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Stage = "home" | "spreads" | "shuffle" | "draw" | "reveal" | "reading";
+/** Application state machine. Each state binds to a design screenshot. */
+type GameState = "MENU" | "SPREAD_SELECTION" | "SHUFFLE" | "DRAWING" | "REVEAL";
 
 type SessionDeckCard = ReturnType<typeof createSessionDeck>[number];
 
-const spring = { type: "spring", stiffness: 180, damping: 22, mass: 0.8 } as const;
-const floatSpring = { type: "spring", stiffness: 220, damping: 18, mass: 0.7 } as const;
+const BACK_SRC = "/assets/back.png";
+const assetUrl = (file: string) => `/assets/${file}`;
+const spring = { type: "spring", stiffness: 200, damping: 24, mass: 0.8 } as const;
 
 function Index() {
-  const [stage, setStage] = useState<Stage>("home");
+  const [gameState, setGameState] = useState<GameState>("MENU");
   const [spreadId, setSpreadId] = useState<SpreadId | null>(null);
   const [deck, setDeck] = useState<SessionDeckCard[]>(() => createSessionDeck());
   const [drawnCards, setDrawnCards] = useState<DrawnCard[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [revealIndex, setRevealIndex] = useState<number>(-1);
-  const [showRevealGlow, setShowRevealGlow] = useState(false);
-  const [reading, setReading] = useState<{ summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null>(null);
-  const [typedSummary, setTypedSummary] = useState("");
-  const [typedCards, setTypedCards] = useState<Record<string, string>>({});
+  const [successFlash, setSuccessFlash] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [reading, setReading] = useState<
+    { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null
+  >(null);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
   const [readingError, setReadingError] = useState<string | null>(null);
-  const timeoutsRef = useRef<number[]>([]);
 
   const spread = spreadId ? SPREADS[spreadId] : null;
   const requiredCount = spread?.positions.length ?? 0;
   const isDrawComplete = requiredCount > 0 && drawnCards.length === requiredCount;
-  const canReveal = stage === "draw" && isDrawComplete;
 
-  const bottomDeck = useMemo(
-    () => deck.filter((card) => !selectedIds.includes(card.instanceId)).slice(0, 18),
+  const railDeck = useMemo(
+    () => deck.filter((card) => !selectedIds.includes(card.instanceId)).slice(0, 16),
     [deck, selectedIds],
   );
 
+  // The screenshot bound to the current state (null => CSS dark result stage).
+  const baseImage = useMemo(() => {
+    if (gameState === "MENU") return assetUrl("menu.png");
+    if (gameState === "SPREAD_SELECTION") return assetUrl("spreads.png");
+    if (gameState === "SHUFFLE") return assetUrl("wash.png");
+    if (gameState === "DRAWING" && spreadId) {
+      return assetUrl(successFlash ? SPREAD_ASSETS[spreadId].success : SPREAD_ASSETS[spreadId].draw);
+    }
+    if (gameState === "REVEAL" && spreadId && !revealed) {
+      return assetUrl(SPREAD_ASSETS[spreadId].reversal);
+    }
+    return null;
+  }, [gameState, spreadId, successFlash, revealed]);
+
+  // When enough cards are drawn, flash the "success" screenshot, then move to reveal.
   useEffect(() => {
-    return () => {
-      timeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout));
-    };
-  }, []);
+    if (gameState !== "DRAWING" || !isDrawComplete) return;
+    setSuccessFlash(true);
+    const id = window.setTimeout(() => {
+      setSuccessFlash(false);
+      setRevealed(false);
+      setGameState("REVEAL");
+    }, 1200);
+    return () => window.clearTimeout(id);
+  }, [gameState, isDrawComplete]);
 
-  useEffect(() => {
-    if (stage !== "reading" || !reading) return;
-
-    setTypedSummary("");
-    setTypedCards({});
-
-    const schedule = (callback: () => void, delay: number) => {
-      const id = window.setTimeout(callback, delay);
-      timeoutsRef.current.push(id);
-      return id;
-    };
-
-    Array.from(reading.summary).forEach((_, index) => {
-      schedule(() => {
-        setTypedSummary(reading.summary.slice(0, index + 1));
-      }, index * 16);
-    });
-
-    const summaryDoneAt = reading.summary.length * 16 + 220;
-    let runningOffset = summaryDoneAt;
-
-    reading.perCard.forEach((item) => {
-      Array.from(item.text).forEach((_, charIndex) => {
-        schedule(() => {
-          setTypedCards((current) => ({
-            ...current,
-            [item.position]: item.text.slice(0, charIndex + 1),
-          }));
-        }, runningOffset + charIndex * 14);
-      });
-      runningOffset += item.text.length * 14 + 180;
-    });
-  }, [reading, stage]);
-
-  const startJourney = () => {
-    setStage("spreads");
-  };
-
-  const chooseSpread = (nextSpread: SpreadId) => {
-    setSpreadId(nextSpread);
+  const chooseSpread = (next: SpreadId) => {
+    setSpreadId(next);
     setDeck(createSessionDeck());
     setSelectedIds([]);
     setDrawnCards([]);
-    setRevealIndex(-1);
     setReading(null);
-    setTypedSummary("");
-    setTypedCards({});
     setReadingError(null);
-    setStage("shuffle");
+    setSuccessFlash(false);
+    setRevealed(false);
+    setGameState("SHUFFLE");
   };
 
-  const finishShuffle = () => {
+  const finishShuffle = useCallback(() => {
     setDeck(createSessionDeck());
-    setStage("draw");
-  };
+    setGameState("DRAWING");
+  }, []);
 
   const drawCard = (card: SessionDeckCard) => {
-    if (!spread || stage !== "draw" || isDrawComplete || selectedIds.includes(card.instanceId)) return;
-
+    if (!spread || gameState !== "DRAWING" || successFlash || isDrawComplete) return;
+    if (selectedIds.includes(card.instanceId)) return;
     const nextIndex = drawnCards.length;
-    const nextCard: DrawnCard = {
-      number: card.number,
-      name: card.name,
-      state: card.state,
-      position: spread.positions[nextIndex],
-      slotIndex: nextIndex,
-    };
-
-    setSelectedIds((current) => [...current, card.instanceId]);
-    setDrawnCards((current) => [...current, nextCard]);
+    setSelectedIds((c) => [...c, card.instanceId]);
+    setDrawnCards((c) => [
+      ...c,
+      {
+        number: card.number,
+        name: card.name,
+        state: card.state,
+        position: spread.positions[nextIndex],
+        slotIndex: nextIndex,
+      },
+    ]);
   };
 
-  const revealCards = async () => {
-    if (!spread || !isDrawComplete) return;
-
-    setStage("reveal");
-    setShowRevealGlow(true);
-    for (let index = 0; index < drawnCards.length; index += 1) {
-      await wait(460);
-      setRevealIndex(index);
-    }
-    await wait(480);
-    setShowRevealGlow(false);
+  const revealNow = async () => {
+    if (!spread || revealed) return;
+    setRevealed(true);
     setIsLoadingReading(true);
     setReadingError(null);
-
     try {
       const response = await generateTarotReading({
         data: {
           spread: `${spread.title}（${spread.subtitle}）`,
-          cards: drawnCards.map((card) => ({
-            position: card.position,
-            name: card.name,
-            state: card.state,
-          })),
+          cards: drawnCards.map((c) => ({ position: c.position, name: c.name, state: c.state })),
         },
       });
       setReading(response);
-      setStage("reading");
     } catch (error) {
       console.error("Tarot reading generation failed:", error);
-      setReadingError("解读生成失败，请稍后再试");
-      setStage("reading");
+      setReadingError("解读暂时无法生成，先看看你抽到的牌吧。");
     } finally {
       setIsLoadingReading(false);
     }
   };
 
   const resetAll = () => {
-    timeoutsRef.current.forEach((timeout) => window.clearTimeout(timeout));
-    timeoutsRef.current = [];
-    setDeck(createSessionDeck());
     setSpreadId(null);
+    setDeck(createSessionDeck());
     setSelectedIds([]);
     setDrawnCards([]);
-    setRevealIndex(-1);
-    setShowRevealGlow(false);
     setReading(null);
-    setTypedSummary("");
-    setTypedCards({});
     setReadingError(null);
     setIsLoadingReading(false);
-    setStage("home");
+    setSuccessFlash(false);
+    setRevealed(false);
+    setGameState("MENU");
   };
 
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="tarot-page-shell">
-        <div className="tarot-stage-frame">
-          <div className="tarot-stage-content">
-            <TarotNav />
+  const showResult = gameState === "REVEAL" && revealed;
 
-            <AnimatePresence mode="wait">
-              {stage === "home" && <HomeStage key="home" onStart={startJourney} />}
-              {stage === "spreads" && <SpreadStage key="spreads" onChoose={chooseSpread} />}
-              {stage === "shuffle" && <ShuffleStage key="shuffle" onDone={finishShuffle} />}
-              {(stage === "draw" || stage === "reveal" || stage === "reading") && spread && (
-                <DrawStage
-                  key="draw-stage"
-                  stage={stage}
-                  spreadId={spread.id}
-                  drawnCards={drawnCards}
-                  revealIndex={revealIndex}
-                  bottomDeck={bottomDeck}
-                  onDraw={drawCard}
-                  onReveal={revealCards}
-                  canReveal={canReveal}
-                  isRevealGlowVisible={showRevealGlow}
-                  reading={reading}
-                  typedSummary={typedSummary}
-                  typedCards={typedCards}
-                  isLoadingReading={isLoadingReading}
-                  readingError={readingError}
-                  onReset={resetAll}
-                />
-              )}
-            </AnimatePresence>
-          </div>
+  return (
+    <div className="sm-root">
+      {showResult && spread && spreadId ? (
+        <RevealResult
+          spreadId={spreadId}
+          drawnCards={drawnCards}
+          reading={reading}
+          isLoading={isLoadingReading}
+          error={readingError}
+          onReset={resetAll}
+        />
+      ) : (
+        <div className="sm-stage">
+          {baseImage && (
+            <img className="sm-base" src={baseImage} alt="" draggable={false} aria-hidden="true" />
+          )}
+
+          <AnimatePresence>
+            {gameState === "MENU" && (
+              <MenuOverlay key="menu" onStart={() => setGameState("SPREAD_SELECTION")} />
+            )}
+            {gameState === "SPREAD_SELECTION" && (
+              <SpreadOverlay key="spreads" onChoose={chooseSpread} />
+            )}
+            {gameState === "SHUFFLE" && <ShuffleOverlay key="shuffle" onDone={finishShuffle} />}
+            {gameState === "DRAWING" && spreadId && (
+              <DrawingOverlay
+                key="drawing"
+                spreadId={spreadId}
+                drawnCards={drawnCards}
+                railDeck={railDeck}
+                onDraw={drawCard}
+                locked={successFlash}
+              />
+            )}
+            {gameState === "REVEAL" && !revealed && (
+              <RevealBackOverlay key="reveal-back" onReveal={revealNow} />
+            )}
+          </AnimatePresence>
         </div>
-      </main>
+      )}
     </div>
   );
 }
 
-function HomeStage({ onStart }: { onStart: () => void }) {
-  return (
-    <motion.section
-      className="tarot-home-stage"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -24 }}
-      transition={spring}
-    >
-      <div className="tarot-home-orb" aria-hidden="true">
-        <span className="tarot-home-moon">☾</span>
-      </div>
-      <div className="tarot-home-title-wrap">
-        <p className="tarot-home-kicker">CAT TAROT</p>
-        <h1 className="tarot-home-title">TAROT CARD READINGS</h1>
-        <p className="tarot-home-sub">让猫咪牌灵，为你照见此刻的方向</p>
-      </div>
+/* ------------------------------------------------------------------ MENU */
 
-      <div className="tarot-home-actions">
-        <PawButton label="START" icon={<Stars className="size-5" />} onClick={onStart} />
-        <PawButton label="GUIDE" icon={<Sparkles className="size-5" />} disabled />
-      </div>
-    </motion.section>
+function MenuOverlay({ onStart }: { onStart: () => void }) {
+  return (
+    <motion.div
+      className="sm-layer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <Hotspot label="开始占卜" left="75.3%" top="66.5%" width="9.5%" height="22%" onClick={onStart} />
+      <Hotspot
+        label="使用指南"
+        left="89.6%"
+        top="66.5%"
+        width="9.5%"
+        height="22%"
+        onClick={() => undefined}
+        muted
+      />
+    </motion.div>
   );
 }
 
-function SpreadStage({ onChoose }: { onChoose: (spread: SpreadId) => void }) {
+/* -------------------------------------------------------- SPREAD SELECTION */
+
+function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
+  const panels: Array<{ id: SpreadId; left: string }> = [
+    { id: "daily", left: "24.5%" },
+    { id: "three", left: "50%" },
+    { id: "either", left: "75.3%" },
+  ];
   return (
-    <motion.section
-      className="tarot-spread-stage"
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -18 }}
-      transition={spring}
+    <motion.div
+      className="sm-layer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      <StageHeading title="SPREADS" subtitle="CHOOSE A SPREAD TO BEGIN" />
-      <div className="tarot-spread-grid">
-        {(Object.keys(SPREADS) as SpreadId[]).map((spreadId) => {
-          const spread = SPREADS[spreadId];
-          return (
-            <motion.button
-              key={spreadId}
-              type="button"
-              className="tarot-spread-card"
-              onClick={() => onChoose(spreadId)}
-              whileHover={{ y: -10, scale: 1.02 }}
-              whileTap={{ scale: 0.985 }}
-              transition={floatSpring}
-            >
-              <div className="tarot-spread-card-header">{spread.title}</div>
-              <div className="tarot-spread-card-preview">
-                {spread.positions.map((_, index) => (
-                  <div key={index} className={cn("tarot-spread-mini-card", `spread-${spreadId}-${index}`)} />
-                ))}
-              </div>
-              <p className="tarot-spread-card-copy">{spread.guidance}</p>
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.section>
+      {panels.map((panel) => (
+        <Hotspot
+          key={panel.id}
+          label={SPREADS[panel.id].subtitle}
+          left={panel.left}
+          top="56%"
+          width="20.5%"
+          height="48%"
+          onClick={() => onChoose(panel.id)}
+        />
+      ))}
+    </motion.div>
   );
 }
 
-const PILE_SIZE = 78;
+/* --------------------------------------------------------------- SHUFFLE */
 
-function ShuffleStage({ onDone }: { onDone: () => void }) {
+function ShuffleOverlay({ onDone }: { onDone: () => void }) {
   const [handMode, setHandMode] = useState(false);
   const { videoRef, status, cursor } = useHandTracking(handMode);
-  const pileRef = useRef<HTMLDivElement | null>(null);
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const [energy, setEnergy] = useState(0);
+  const [shuffling, setShuffling] = useState(false);
+  const pointsRef = useRef<Array<{ x: number; y: number; t: number }>>([]);
+  const doneRef = useRef(false);
 
-  // Map the virtual cursor onto the pile and pick the closest card.
+  const startShuffle = useCallback(() => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    setShuffling(true);
+    window.setTimeout(onDone, 1500);
+  }, [onDone]);
+
+  // Detect a circular "wash" motion of the hand over the pile region.
   useEffect(() => {
-    if (!handMode || !cursor.active) {
-      setHoverIndex(null);
-      setEnergy(0);
+    if (!handMode || !cursor.active || doneRef.current) return;
+    const inPile = cursor.x > 0.06 && cursor.x < 0.94 && cursor.y > 0.34 && cursor.y < 0.92;
+    if (!inPile) {
+      pointsRef.current = [];
       return;
     }
-    const node = pileRef.current;
-    if (!node) return;
-    const rect = node.getBoundingClientRect();
-    const frame = node.closest(".tarot-stage-frame")?.getBoundingClientRect();
-    if (!frame) return;
-    const px = frame.left + cursor.x * frame.width;
-    const py = frame.top + cursor.y * frame.height;
-    const within =
-      px >= rect.left - 60 && px <= rect.right + 60 && py >= rect.top - 80 && py <= rect.bottom + 80;
-    if (!within) {
-      setHoverIndex(null);
-      setEnergy((e) => Math.max(0, e - 0.15));
-      return;
+    const now = performance.now();
+    const pts = pointsRef.current;
+    pts.push({ x: cursor.x, y: cursor.y, t: now });
+    while (pts.length && now - pts[0].t > 1600) pts.shift();
+    if (pts.length > 10) {
+      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+      let total = 0;
+      for (let i = 1; i < pts.length; i += 1) {
+        const a1 = Math.atan2(pts[i - 1].y - cy, pts[i - 1].x - cx);
+        const a2 = Math.atan2(pts[i].y - cy, pts[i].x - cx);
+        let d = a2 - a1;
+        if (d > Math.PI) d -= 2 * Math.PI;
+        if (d < -Math.PI) d += 2 * Math.PI;
+        total += d;
+      }
+      if (Math.abs(total) > Math.PI * 2.2) {
+        pointsRef.current = [];
+        startShuffle();
+      }
     }
-    const ratio = Math.min(1, Math.max(0, (px - rect.left) / rect.width));
-    setHoverIndex(Math.round(ratio * (PILE_SIZE - 1)));
-    setEnergy(1);
-  }, [cursor, handMode]);
-
-  const cards = useMemo(
-    () =>
-      Array.from({ length: PILE_SIZE }, (_, index) => ({
-        id: index,
-        // base fan angle across the arc
-        angle: (index / (PILE_SIZE - 1) - 0.5) * 86,
-      })),
-    [],
-  );
-
-  const cursorStyle = cursor.active
-    ? { left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }
-    : { left: "-100%", top: "-100%" };
+  }, [cursor, handMode, startShuffle]);
 
   return (
-    <motion.section
-      className="tarot-shuffle-stage"
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -18 }}
-      transition={spring}
+    <motion.div
+      className="sm-layer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      <StageHeading title="SHUFFLE" subtitle="挥动手指拂过牌堆，让 78 张牌随你流动" />
-
-      <div className="tarot-shuffle-stage-area">
-        <div className="tarot-shuffle-fan" ref={pileRef}>
-          {cards.map((card) => {
-            const distance = hoverIndex === null ? 99 : Math.abs(card.id - hoverIndex);
-            const near = distance <= 4;
-            const lift = near ? (5 - distance) * 12 : 0;
-            const spreadOut = 0.55 + energy * 0.45;
-            return (
-              <motion.div
-                key={card.id}
-                className={cn("tarot-fan-card", near && "is-hovered")}
-                style={{ zIndex: near ? 200 - distance : card.id }}
-                animate={{
-                  rotate: card.angle * spreadOut,
-                  y: -lift + Math.sin(card.angle * 0.05) * 6,
-                  scale: near ? 1.06 : 1,
-                }}
-                transition={floatSpring}
-              >
-                <TarotBackCard alt="洗牌中的塔罗牌背面" />
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {handMode && cursor.active && (
+      {/* Soft shimmer over the pile while shuffling */}
+      <AnimatePresence>
+        {shuffling && (
           <motion.div
-            className="tarot-hand-cursor"
-            style={cursorStyle}
-            animate={{ scale: energy > 0.2 ? 1.25 : 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="sm-shuffle-glow"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.85, 0.4, 0.9, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, times: [0, 0.25, 0.5, 0.75, 1] }}
           />
         )}
-      </div>
+      </AnimatePresence>
 
-      <div className="tarot-shuffle-controls">
+      {/* Tap-to-shuffle paw hotspot baked into wash.png */}
+      <Hotspot
+        label="洗牌"
+        left="50%"
+        top="83.5%"
+        width="12%"
+        height="15%"
+        onClick={startShuffle}
+        round
+      />
+
+      {/* Virtual cursor from hand tracking */}
+      {handMode && cursor.active && (
+        <motion.div
+          className="sm-cursor"
+          style={{ left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }}
+          animate={{ scale: shuffling ? 1.4 : 1 }}
+        />
+      )}
+
+      {/* Gesture control panel */}
+      <div className="sm-shuffle-controls">
         <video
           ref={videoRef}
-          className={cn("tarot-hand-preview", !handMode && "is-hidden")}
+          className={cn("sm-cam", !handMode && "is-hidden")}
           playsInline
           muted
         />
-        <div className="tarot-shuffle-buttons">
-          <Button
-            variant="ghost"
-            className="tarot-primary-action"
-            onClick={() => setHandMode((value) => !value)}
-          >
-            {handMode ? <CameraOff className="size-4" /> : <Hand className="size-4" />}
-            {handMode ? "关闭手势" : "开启手势洗牌"}
-          </Button>
-          <Button variant="ghost" className="tarot-primary-action" onClick={onDone}>
-            洗牌完成
-          </Button>
-        </div>
-        <p className="tarot-hand-status">{handStatusLabel(handMode, status)}</p>
+        <button type="button" className="sm-pill" onClick={() => setHandMode((v) => !v)}>
+          {handMode ? "关闭手势" : "开启手势洗牌"}
+        </button>
+        <p className="sm-status">{handStatus(handMode, status, shuffling)}</p>
       </div>
-    </motion.section>
+    </motion.div>
   );
 }
 
-function handStatusLabel(handMode: boolean, status: ReturnType<typeof useHandTracking>["status"]) {
-  if (!handMode) return "点击右键拖拽或开启摄像头，用食指拂过牌堆洗牌";
+function handStatus(
+  handMode: boolean,
+  status: ReturnType<typeof useHandTracking>["status"],
+  shuffling: boolean,
+) {
+  if (shuffling) return "✦ 牌灵流动中……";
+  if (!handMode) return "点击爪印洗牌，或开启手势在牌堆上方画圈搓牌";
   switch (status) {
     case "requesting":
       return "正在请求摄像头权限……";
     case "loading":
       return "正在载入手势模型……";
     case "tracking":
-      return "已连接：移动食指划过牌堆";
+      return "已连接：在牌堆上方用手画圈搓牌";
     case "denied":
-      return "摄像头权限被拒绝，可直接点击「洗牌完成」";
+      return "摄像头被拒绝，可直接点击爪印洗牌";
     case "error":
-      return "手势追踪不可用，可直接点击「洗牌完成」";
+      return "手势不可用，可直接点击爪印洗牌";
     default:
       return "准备中……";
   }
 }
 
-function DrawStage({
-  stage,
+/* --------------------------------------------------------------- DRAWING */
+
+function DrawingOverlay({
   spreadId,
   drawnCards,
-  revealIndex,
-  bottomDeck,
+  railDeck,
   onDraw,
-  onReveal,
-  canReveal,
-  isRevealGlowVisible,
-  reading,
-  typedSummary,
-  typedCards,
-  isLoadingReading,
-  readingError,
-  onReset,
+  locked,
 }: {
-  stage: Stage;
   spreadId: SpreadId;
   drawnCards: DrawnCard[];
-  revealIndex: number;
-  bottomDeck: SessionDeckCard[];
+  railDeck: SessionDeckCard[];
   onDraw: (card: SessionDeckCard) => void;
-  onReveal: () => void;
-  canReveal: boolean;
-  isRevealGlowVisible: boolean;
-  reading: { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null;
-  typedSummary: string;
-  typedCards: Record<string, string>;
-  isLoadingReading: boolean;
-  readingError: string | null;
-  onReset: () => void;
+  locked: boolean;
 }) {
-  const spread = SPREADS[spreadId];
   const slots = SLOT_LAYOUTS[spreadId];
-  const isRevealStage = stage === "reveal" || stage === "reading";
-
   return (
-    <motion.section
-      className="tarot-draw-stage"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={spring}
+    <motion.div
+      className="sm-layer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      <StageHeading title={spread.title} subtitle={isRevealStage ? spread.revealPrompt : spread.guidance} />
-
-      <LayoutGroup>
-        <div className={cn("tarot-slot-field", `field-${spreadId}`)}>
-          {slots.map((slot, index) => {
-            const card = drawnCards[index];
-            const revealed = revealIndex >= index;
-            const shouldGlow = isRevealGlowVisible && revealIndex === index;
-
-            return (
-              <motion.div
-                key={index}
-                className="tarot-slot-anchor"
-                style={{ left: slot.left, top: slot.top }}
-                initial={false}
-                animate={{ scale: card ? 1 : 0.98, opacity: 1 }}
-              >
-                {!card && <div className="tarot-slot-placeholder" />}
-                {card && (
-                  <motion.div
-                    layoutId={`card-${card.slotIndex}`}
-                    className={cn("tarot-reveal-wrapper", shouldGlow && "is-glowing")}
-                    animate={{ rotateY: revealed ? 180 : 0, rotateZ: card.state === "逆位" && revealed ? 180 : 0 }}
-                    transition={{ ...spring, duration: 0.85 }}
-                    style={{ transformStyle: "preserve-3d" }}
-                  >
-                    <div className="tarot-card-face tarot-card-face-back">
-                      <TarotBackCard alt={`${card.position} 的塔罗牌背面`} />
-                    </div>
-                    <div className="tarot-card-face tarot-card-face-front">
-                      <TarotFrontCard
-                        cardNumber={card.number}
-                        alt={`${card.name}${card.state} 塔罗牌`}
-                        className={cn(card.state === "逆位" && "rotate-180")}
-                      />
-                    </div>
-                    {shouldGlow && (
-                      <motion.div
-                        className="tarot-paw-burst"
-                        initial={{ opacity: 0, scale: 0.2 }}
-                        animate={{ opacity: [0, 1, 0], scale: [0.2, 1.1, 1.35] }}
-                        transition={{ duration: 0.7 }}
-                      />
-                    )}
-                  </motion.div>
-                )}
-
-                <div className="tarot-slot-caption">
-                  <span>{spread.positions[index]}</span>
-                  {isRevealStage && card ? (
-                    <motion.div className="tarot-card-meta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: revealed ? 1 : 0, y: revealed ? 0 : 10 }}>
-                      <strong>{card.name}</strong>
-                      <em>{card.state}</em>
-                    </motion.div>
-                  ) : null}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {!isRevealStage && (
-          <div className="tarot-bottom-drawer">
-            <div className="tarot-drawer-arrow">‹</div>
-            <div className="tarot-card-rail" role="list" aria-label="可选择的卡牌列表">
-              {bottomDeck.map((card) => (
-                <motion.button
-                  key={card.instanceId}
-                  type="button"
-                  className="tarot-rail-card"
-                  drag
-                  dragSnapToOrigin
-                  dragElastic={0.4}
-                  whileHover={{ y: -12, scale: 1.06 }}
-                  whileTap={{ scale: 0.98 }}
-                  whileDrag={{ scale: 1.1, zIndex: 50 }}
-                  transition={floatSpring}
-                  onClick={() => onDraw(card)}
-                >
-                  <TarotBackCard alt="待抽取的塔罗牌背面" />
-                </motion.button>
-              ))}
-            </div>
-            <div className="tarot-drawer-arrow">›</div>
-          </div>
-        )}
-      </LayoutGroup>
-
-      <div className="tarot-stage-bottom">
-        {canReveal ? (
-          <motion.button
-            type="button"
-            className="tarot-reveal-trigger"
-            onClick={onReveal}
-            initial={{ opacity: 0.3 }}
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
+      {/* Drawn cards fly into their slots (face down) */}
+      {slots.map((slot, index) => {
+        const card = drawnCards[index];
+        if (!card) return null;
+        return (
+          <motion.div
+            key={index}
+            className="sm-slot"
+            style={{ left: slot.left, top: slot.top }}
+            initial={{ opacity: 0, y: 60, scale: 0.7 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={spring}
           >
-            <WandSparkles className="size-4" />
-            TAP TO REVEAL
-          </motion.button>
-        ) : !isRevealStage ? (
-          <div className="tarot-guidance-line">拖动或点击下方牌堆，依次选出你的牌。</div>
-        ) : null}
-      </div>
+            <img src={BACK_SRC} alt="已抽取的牌背面" draggable={false} />
+          </motion.div>
+        );
+      })}
 
-      {stage === "reading" && (
-        <div className="tarot-reading-panel">
-          <div className="tarot-reading-header">
-            <div>
-              <p className="tarot-reading-kicker">AI DEEP READING</p>
-              <h2>{spread.interpretationTitle}</h2>
-            </div>
-            <Button variant="ghost" className="tarot-primary-action" onClick={onReset}>
-              <RotateCcw className="size-4" />
-              重新占卜
-            </Button>
-          </div>
-
-          <div className="tarot-reading-summary">
-            {isLoadingReading ? "正在召唤解读……" : readingError ? readingError : typedSummary}
-          </div>
-
-          <div className={cn("tarot-reading-grid", `reading-${spreadId}`)}>
-            {drawnCards.map((card) => {
-              const item = reading?.perCard.find((entry) => entry.position === card.position);
-              return (
-                <article key={card.position} className="tarot-reading-card-copy">
-                  <h3>{item?.title ?? `${card.name}｜${card.state}`}</h3>
-                  <p>{typedCards[card.position] ?? ""}</p>
-                </article>
-              );
-            })}
-          </div>
+      {/* Interactive deck rail along the bottom strip of the screenshot */}
+      {!locked && (
+        <div className="sm-deck">
+          {railDeck.map((card) => (
+            <motion.button
+              key={card.instanceId}
+              type="button"
+              className="sm-deck-card"
+              whileHover={{ y: -18, scale: 1.07 }}
+              whileTap={{ scale: 0.96 }}
+              transition={spring}
+              onClick={() => onDraw(card)}
+              aria-label="抽一张牌"
+            >
+              <img src={BACK_SRC} alt="" draggable={false} />
+            </motion.button>
+          ))}
         </div>
       )}
-    </motion.section>
+    </motion.div>
   );
 }
 
-function StageHeading({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div className="tarot-stage-heading">
-      <div className="tarot-stage-heading-lines" aria-hidden="true" />
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
-    </div>
-  );
-}
+/* ----------------------------------------------------------- REVEAL BACK */
 
-function TarotNav() {
-  return (
-    <header className="tarot-nav">
-      <nav aria-label="Primary">
-        <a href="#" className="is-active">
-          HOME
-        </a>
-        <a href="#">ABOUT</a>
-        <div className="tarot-nav-moon" aria-hidden="true">
-          ☾
-        </div>
-        <a href="#">HISTORY</a>
-        <a href="#">CONTACT</a>
-      </nav>
-    </header>
-  );
-}
-
-function PawButton({
-  label,
-  icon,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-}) {
+function RevealBackOverlay({ onReveal }: { onReveal: () => void }) {
   return (
     <motion.button
       type="button"
-      className="tarot-paw-button"
-      onClick={onClick}
-      disabled={disabled}
-      whileHover={disabled ? undefined : { y: -6, scale: 1.04 }}
-      whileTap={disabled ? undefined : { scale: 0.98 }}
-      transition={floatSpring}
+      className="sm-reveal-hit"
+      onClick={onReveal}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      aria-label="翻开牌面"
     >
-      <span className="tarot-paw-outline" aria-hidden="true">
-        <span className="toe toe-1" />
-        <span className="toe toe-2" />
-        <span className="toe toe-3" />
-        <span className="toe toe-4" />
-        <span className="pad" />
-      </span>
-      <span className="tarot-paw-label">{label}</span>
-      <span className="tarot-paw-small">{icon}</span>
+      <motion.span
+        className="sm-reveal-hint"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
+      >
+        TAP TO REVEAL
+      </motion.span>
     </motion.button>
   );
 }
 
-function TarotBackCard({ alt, className }: { alt: string; className?: string }) {
+/* --------------------------------------------------------- REVEAL RESULT */
+
+function RevealResult({
+  spreadId,
+  drawnCards,
+  reading,
+  isLoading,
+  error,
+  onReset,
+}: {
+  spreadId: SpreadId;
+  drawnCards: DrawnCard[];
+  reading:
+    | { summary: string; perCard: Array<{ position: string; title: string; text: string }> }
+    | null;
+  isLoading: boolean;
+  error: string | null;
+  onReset: () => void;
+}) {
+  const spread = SPREADS[spreadId];
   return (
-    <img
-      src={getCardBackPath()}
-      data-fallback-src={backAsset.url}
-      onError={applyFallback}
-      alt={alt}
-      className={cn("tarot-card-image", className)}
-      loading="lazy"
-      draggable={false}
-    />
+    <motion.section
+      className="sm-result"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={spring}
+    >
+      <header className="sm-result-head">
+        <p className="sm-kicker">{spread.title}</p>
+        <h1>{spread.interpretationTitle}</h1>
+        <p className="sm-sub">{spread.revealPrompt === spread.revealPrompt ? spread.subtitle : ""}</p>
+        <button type="button" className="sm-pill" onClick={onReset}>
+          <RotateCcw className="size-4" /> 重新占卜
+        </button>
+      </header>
+
+      <div className="sm-card-row">
+        {drawnCards.map((card, index) => (
+          <motion.figure
+            key={card.position}
+            className="sm-result-card"
+            initial={{ rotateY: 90, opacity: 0 }}
+            animate={{ rotateY: 0, opacity: 1 }}
+            transition={{ ...spring, delay: index * 0.16 }}
+          >
+            <img
+              src={getCardFrontPath(card.number)}
+              alt={`${card.name}${card.state}`}
+              className={cn(card.state === "逆位" && "is-reversed")}
+              draggable={false}
+            />
+            <figcaption>
+              <span className="sm-pos">{card.position}</span>
+              <strong>
+                {card.name} · {card.state}
+              </strong>
+            </figcaption>
+          </motion.figure>
+        ))}
+      </div>
+
+      <div className="sm-reading">
+        <p className="sm-reading-kicker">AI 中性深度解读</p>
+        <p className="sm-reading-summary">
+          {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
+        </p>
+        <div className="sm-reading-grid">
+          {drawnCards.map((card) => {
+            const item = reading?.perCard.find((entry) => entry.position === card.position);
+            return (
+              <article key={card.position} className="sm-reading-item">
+                <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
+                <p>{item?.text ?? (isLoading ? "" : "—")}</p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </motion.section>
   );
 }
 
-function TarotFrontCard({ cardNumber, alt, className }: { cardNumber: number; alt: string; className?: string }) {
+/* ----------------------------------------------------------- SHARED BITS */
+
+function Hotspot({
+  label,
+  left,
+  top,
+  width,
+  height,
+  onClick,
+  round,
+  muted,
+}: {
+  label: string;
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  onClick: () => void;
+  round?: boolean;
+  muted?: boolean;
+}) {
   return (
-    <img
-      src={getCardFrontPath(cardNumber)}
-      data-fallback-src={backAsset.url}
-      onError={applyFallback}
-      alt={alt}
-      className={cn("tarot-card-image", className)}
-      loading="lazy"
-      draggable={false}
+    <motion.button
+      type="button"
+      className={cn("sm-hotspot", round && "is-round", muted && "is-muted")}
+      style={{ left, top, width, height }}
+      onClick={onClick}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.97 }}
+      aria-label={label}
     />
   );
-}
-
-function applyFallback(event: React.SyntheticEvent<HTMLImageElement>) {
-  const target = event.currentTarget;
-  const fallback = target.dataset.fallbackSrc;
-  if (fallback && target.src !== fallback) {
-    target.src = fallback;
-  }
-}
-
-function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
