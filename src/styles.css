@@ -610,16 +610,17 @@
   }
 
   .tarot-home-title-wrap {
-    @apply right-[10%] top-[21%] w-[70%];
+    @apply w-[88%];
   }
 
   .tarot-home-actions {
-    @apply bottom-[12%] right-1/2 translate-x-1/2 gap-6;
+    @apply gap-6;
   }
 
   .tarot-paw-button {
     @apply w-[30vw] min-w-[104px];
   }
+
 
   .tarot-spread-grid {
     @apply grid-cols-1 px-[10%];
