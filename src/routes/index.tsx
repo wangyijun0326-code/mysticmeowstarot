@@ -12,7 +12,7 @@ import {
   type SpreadId,
 } from "@/lib/tarot";
 import { generateTarotReading } from "@/lib/tarot-reading.functions";
-import { useHandTracking } from "@/hooks/use-hand-tracking";
+import { useGesture } from "@/components/gesture/gesture-provider";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
