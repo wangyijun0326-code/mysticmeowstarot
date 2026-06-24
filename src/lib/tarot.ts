@@ -246,27 +246,8 @@ export function createSessionDeck() {
   }));
 }
 
-export function getStageReferencePath(stage: "home" | "spreads" | "shuffle" | "draw" | "reveal", spreadId?: SpreadId | null) {
-  if (stage === "home") return "/WEB UI DESIGN1/menu.png";
-  if (stage === "spreads") return "/WEB UI DESIGN1/spreads (2).png";
-  if (stage === "shuffle") return "/WEB UI DESIGN1/wash.png";
 
-  if (spreadId === "daily") {
-    return stage === "draw"
-      ? "/WEB UI DESIGN1/one card.png"
-      : "/WEB UI DESIGN1/one card reversal.png";
-  }
 
-  if (spreadId === "three") {
-    return stage === "draw"
-      ? "/WEB UI DESIGN2/three cards.png"
-      : "/WEB UI DESIGN2/three cards reversal.png";
-  }
-
-  return stage === "draw"
-    ? "/WEB UI DESIGN2/five cards.png"
-    : "/WEB UI DESIGN2/five cards reversal.png";
-}
 
 const uploadedCardFrontPaths: Partial<Record<number, string>> = {
   1: card1Asset.url,
