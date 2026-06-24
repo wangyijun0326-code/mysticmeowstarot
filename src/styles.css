@@ -246,30 +246,43 @@
   outline-offset: 2px;
 }
 
-/* ----- Shuffle ----- */
-.sm-shuffle-glow {
-  position: absolute;
-  left: 50%;
-  top: 56%;
-  width: 80%;
-  height: 60%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow-strong) 0%, transparent 65%);
-  pointer-events: none;
-  filter: blur(6px);
+/* ----- Shuffle (live physics pile) ----- */
+.sm-shuffle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.sm-cursor {
+.sm-pile {
   position: absolute;
-  width: 26px;
-  height: 26px;
+  left: 50%;
+  top: 50%;
+  width: 12%;
+  aspect-ratio: 1086 / 1448;
   transform: translate(-50%, -50%);
-  border-radius: 999px;
-  background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
-  box-shadow: 0 0 22px var(--glow-strong);
+}
+
+.sm-pile-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  will-change: transform;
+  filter: drop-shadow(0 10px 22px oklch(0.02 0.01 300 / 55%));
+}
+
+.sm-pile-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 240%;
+  height: 240%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-strong) 0%, transparent 62%);
   pointer-events: none;
-  z-index: 30;
 }
 
 .sm-shuffle-controls {
@@ -280,25 +293,43 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  max-width: 70%;
+  gap: 0.6rem;
+  max-width: 80%;
   text-align: center;
   pointer-events: none;
 }
 
-.sm-cam {
-  width: clamp(96px, 10vw, 150px);
-  aspect-ratio: 4 / 3;
-  border-radius: 12px;
-  object-fit: cover;
-  transform: scaleX(-1);
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 24px oklch(0.02 0.01 300 / 60%);
+.sm-shuffle-controls .sm-pill {
+  pointer-events: auto;
 }
 
-.sm-cam.is-hidden {
-  display: none;
+/* ----- Global back ----- */
+.sm-back {
+  position: fixed;
+  left: clamp(0.75rem, 2vw, 1.5rem);
+  top: clamp(0.75rem, 2vw, 1.5rem);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
 }
+
+.sm-back:hover {
+  box-shadow: 0 0 0 1px var(--gold-soft), 0 0 18px var(--glow-soft);
+  transform: translateY(-1px);
+}
+
+
 
 .sm-pill {
   display: inline-flex;
