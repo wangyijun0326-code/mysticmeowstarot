@@ -146,9 +146,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEnsureSession();
 
+  // The gesture engine relies on browser APIs (camera, window, document),
+  // so it only mounts on the client after hydration.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      {mounted ? (
+        <GestureProvider>
+          <Outlet />
+        </GestureProvider>
+      ) : (
+        <Outlet />
+      )}
     </QueryClientProvider>
   );
 }
