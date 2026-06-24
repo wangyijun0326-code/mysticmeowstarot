@@ -585,9 +585,8 @@
   @apply text-[clamp(0.95rem,1.1vw,1.15rem)] leading-[1.4];
 }
 
-.tarot-footer-meta {
-  @apply mt-2 flex w-full flex-wrap justify-between gap-2 px-2 text-xs text-primary/55;
-}
+
+
 
 .field-daily .tarot-slot-anchor {
   @apply -translate-y-[39%];
