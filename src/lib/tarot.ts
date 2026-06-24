@@ -125,10 +125,10 @@ export const SPREADS: Record<SpreadId, SpreadDefinition> = {
     id: "either",
     title: "EITHER OR",
     subtitle: "二选一牌阵",
-    guidance: "COMPARE TWO PATHS. CHOOSE YOUR DIRECTION.",
+    guidance: "对比两条路径，看清各自的走向。",
     revealPrompt: "TAP TO REVEAL",
-    interpretationTitle: "命运分岔口",
-    positions: ["CURRENT", "A PATH", "A OUTCOME", "B PATH", "B OUTCOME"],
+    interpretationTitle: "两条路径的对照",
+    positions: ["现状", "路径 A", "A 的结果", "路径 B", "B 的结果"],
   },
 };
 
@@ -246,27 +246,8 @@ export function createSessionDeck() {
   }));
 }
 
-export function getStageReferencePath(stage: "home" | "spreads" | "shuffle" | "draw" | "reveal", spreadId?: SpreadId | null) {
-  if (stage === "home") return "/WEB UI DESIGN1/menu.png";
-  if (stage === "spreads") return "/WEB UI DESIGN1/spreads (2).png";
-  if (stage === "shuffle") return "/WEB UI DESIGN1/wash.png";
 
-  if (spreadId === "daily") {
-    return stage === "draw"
-      ? "/WEB UI DESIGN1/one card.png"
-      : "/WEB UI DESIGN1/one card reversal.png";
-  }
 
-  if (spreadId === "three") {
-    return stage === "draw"
-      ? "/WEB UI DESIGN2/three cards.png"
-      : "/WEB UI DESIGN2/three cards reversal.png";
-  }
-
-  return stage === "draw"
-    ? "/WEB UI DESIGN2/five cards.png"
-    : "/WEB UI DESIGN2/five cards reversal.png";
-}
 
 const uploadedCardFrontPaths: Partial<Record<number, string>> = {
   1: card1Asset.url,
