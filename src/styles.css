@@ -668,8 +668,5 @@
   .tarot-reading-panel {
     @apply px-[4%] pb-[4%];
   }
-
-  .tarot-footer-meta {
-    @apply flex-col text-[10px];
-  }
 }
+
