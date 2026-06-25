@@ -169,24 +169,24 @@ export function GestureProvider({ children }: { children: ReactNode }) {
           el.classList.toggle("is-hot", Boolean(target));
           el.classList.toggle("is-pinch", c.pinch);
 
-          // ----- Dwell to click (buttons only) -----
-          if (target && target === dwellTarget) {
-            if (!fired) {
-              const p = Math.min(1, (now - dwellStart) / DWELL_MS);
-              if (ring) ring.style.setProperty("--p", `${p * 360}deg`);
-              if (p >= 1) {
-                fire(target);
-                fired = true;
-              }
-            }
-          } else {
+          // ----- Selection is PINCH-ONLY (hover/dwell auto-click removed) -----
+          // Previously, hovering over a button for DWELL_MS (600ms) auto-fired a
+          // click. That made buttons trigger just by hovering for under a second,
+          // which is the "悬停就开始倒计时并自动确定" bug. We now require a
+          // pinch (thumb + index) over the target to activate it.
+          if (target !== dwellTarget) {
+            // Reset the per-target latch when the cursor moves to a new target.
             dwellTarget = target;
             dwellStart = now;
             fired = false;
-            if (ring) ring.style.setProperty("--p", "0deg");
+          }
+          // The ring is now a pinch indicator only: it fills while pinching over
+          // a clickable target, and never auto-fires on its own.
+          if (ring) {
+            ring.style.setProperty("--p", c.pinch && target ? "360deg" : "0deg");
           }
 
-          // ----- Pinch to click a button (only when not over a draggable surface) -----
+          // ----- Pinch to click a button -----
           if (c.pinch && !pinchPrev && target && !fired) {
             fire(target);
             fired = true;
