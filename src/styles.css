@@ -444,13 +444,12 @@
 }
 
 .sm-pool-card {
-  display: inline-block;
-  vertical-align: middle;
+  flex: 0 0 auto;
   width: 64px;
   aspect-ratio: 1086 / 1448;
   margin-right: 6px;
   cursor: grab;
-  touch-action: pan-x;
+  touch-action: none;
   background: transparent;
   border: none;
   box-shadow: none;
