@@ -77,9 +77,8 @@ import card76Asset from "@/assets/uploaded/card-76.png.asset.json";
 import card77Asset from "@/assets/uploaded/card-77.png.asset.json";
 import card78Asset from "@/assets/uploaded/card-78.png.asset.json";
 
-export type SpreadId = "daily" | "three" | "either";
+export type SpreadId = "one" | "three" | "five";
 export type CardState = "正位" | "逆位";
-
 
 export interface TarotCardMeta {
   number: number;
@@ -90,6 +89,12 @@ export interface DrawnCard extends TarotCardMeta {
   state: CardState;
   position: string;
   slotIndex: number;
+}
+
+export interface SlotLayout {
+  left: string;
+  top: string;
+  width: string;
 }
 
 export interface SpreadDefinition {
@@ -103,11 +108,11 @@ export interface SpreadDefinition {
 }
 
 export const SPREADS: Record<SpreadId, SpreadDefinition> = {
-  daily: {
-    id: "daily",
+  one: {
+    id: "one",
     title: "DAILY DRAW",
     subtitle: "日运指引",
-    guidance: "ONE CARD, ONE MESSAGE. START YOUR DAY.",
+    guidance: "Slide through the cards, then tap one to choose.",
     revealPrompt: "TAP TO REVEAL",
     interpretationTitle: "今日灵讯",
     positions: ["DAILY MESSAGE"],
@@ -116,64 +121,53 @@ export const SPREADS: Record<SpreadId, SpreadDefinition> = {
     id: "three",
     title: "THREE CARDS",
     subtitle: "过去 / 现在 / 未来",
-    guidance: "PAST, PRESENT, FUTURE. CLARITY IN THREE.",
+    guidance: "Swipe through the cards, then tap three to choose.",
     revealPrompt: "TAP TO REVEAL",
     interpretationTitle: "时间的线索",
     positions: ["PAST", "PRESENT", "FUTURE"],
   },
-  either: {
-    id: "either",
-    title: "EITHER OR",
+  five: {
+    id: "five",
+    title: "EITHER / OR",
     subtitle: "二选一牌阵",
-    guidance: "对比两条路径，看清各自的走向。",
+    guidance: "Swipe through the cards, then tap five to choose.",
     revealPrompt: "TAP TO REVEAL",
     interpretationTitle: "两条路径的对照",
     positions: ["现状", "路径 A", "A 的结果", "路径 B", "B 的结果"],
   },
 };
 
-// Slot positions are tuned to overlay precisely on the design screenshots
-// (1672 x 941). Values are percentages of the stage frame.
-export const SLOT_LAYOUTS: Record<SpreadId, Array<{ left: string; top: string }>> = {
-  daily: [{ left: "50%", top: "40%" }],
+export const SLOT_LAYOUTS: Record<SpreadId, SlotLayout[]> = {
+  one: [{ left: "50.1%", top: "40.2%", width: "12.8%" }],
   three: [
-    { left: "33.5%", top: "41%" }, // PAST
-    { left: "50%", top: "41%" }, // PRESENT
-    { left: "66.5%", top: "41%" }, // FUTURE
+    { left: "33.15%", top: "41.1%", width: "12.55%" },
+    { left: "50.0%", top: "41.1%", width: "12.55%" },
+    { left: "66.85%", top: "41.1%", width: "12.55%" },
   ],
-  either: [
-    { left: "50%", top: "55.5%" }, // 1 现状
-    { left: "32.7%", top: "54%" }, // 2 路径 A
-    { left: "30.5%", top: "30.5%" }, // 3 A 的结果
-    { left: "65.5%", top: "54%" }, // 4 路径 B
-    { left: "68.5%", top: "30.5%" }, // 5 B 的结果
+  five: [
+    { left: "49.95%", top: "56.1%", width: "9.1%" },
+    { left: "32.5%", top: "53.9%", width: "10.1%" },
+    { left: "30.55%", top: "30.7%", width: "9.75%" },
+    { left: "66.7%", top: "53.9%", width: "10.1%" },
+    { left: "68.55%", top: "30.7%", width: "9.75%" },
   ],
 };
 
-// Maps each spread to its design-screenshot filenames living in /public/assets.
-// These drive the application state machine: every state renders the matching
-// screenshot as an <img> base layer (never a CSS background).
-export const SPREAD_ASSETS: Record<
-  SpreadId,
-  { draw: string; success: string; reversal: string; end: string }
-> = {
-  daily: {
-    draw: "one_card.png",
-    success: "one_card_success.png",
-    reversal: "one_card_reversal.png",
-    end: "one-end.png",
+export const SPREAD_ASSETS: Record<SpreadId, { draw: string; reversal: string; end: string }> = {
+  one: {
+    draw: "one card.png",
+    reversal: "one card reversal.png",
+    end: "end.png",
   },
   three: {
-    draw: "three_cards.png",
-    success: "three_cards_success.png",
-    reversal: "three_cards_reversal.png",
-    end: "three-end.png",
+    draw: "three cards.png",
+    reversal: "three cards reversal.png",
+    end: "end.png",
   },
-  either: {
-    draw: "five_cards.png",
-    success: "five_cards_success.png",
-    reversal: "five_cards_reversal.png",
-    end: "five-end.png",
+  five: {
+    draw: "five cards.png",
+    reversal: "five cards reversal.png",
+    end: "end.png",
   },
 };
 
