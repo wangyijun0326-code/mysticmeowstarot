@@ -89,9 +89,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "猫咪塔罗 Web App" },
+      { title: "Mystic Meows Tarot" },
       { name: "description", content: "沉浸式猫咪塔罗抽牌体验，含洗牌、揭牌仪式与 AI 深度解读。" },
-      { property: "og:title", content: "猫咪塔罗 Web App" },
+      { property: "og:title", content: "Mystic Meows Tarot" },
       {
         property: "og:description",
         content: "沉浸式猫咪塔罗抽牌体验，含洗牌、揭牌仪式与 AI 深度解读。",
@@ -101,6 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/assets/back.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
@@ -115,7 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebApplication",
-          name: "猫咪塔罗 Web App",
+          name: "Mystic Meows Tarot",
           applicationCategory: "EntertainmentApplication",
           description: "沉浸式猫咪塔罗抽牌体验，含洗牌、揭牌仪式与 AI 深度解读。",
         }),
