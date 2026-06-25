@@ -255,6 +255,21 @@ function Index() {
                 locked={successFlash || isDrawComplete}
               />
             )}
+            {gameState === "DRAWING" && isDrawComplete && (
+              <motion.button
+                key="confirm-reveal"
+                type="button"
+                className="sm-reveal-confirm"
+                onClick={goToReveal}
+                data-gesture
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                确认解读
+              </motion.button>
+            )}
             {gameState === "REVEAL" && !revealed && (
               <RevealBackOverlay key="reveal-back" onReveal={revealNow} />
             )}
