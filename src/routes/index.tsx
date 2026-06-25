@@ -107,7 +107,7 @@ function Index() {
       setReading(response);
     } catch (error) {
       console.error("Tarot reading generation failed:", error);
-      setReadingError("解读暂时无法生成，先看看你抽到的牌吧。);
+      setReadingError("解读暂时无法生成，先看看你抽到的牌吧。");
     } finally {
       setIsLoadingReading(false);
     }
