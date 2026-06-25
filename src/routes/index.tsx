@@ -697,6 +697,9 @@ function DrawingStage({
             {railDeck.map((card) => {
               const isPressing = pressId === card.instanceId;
               const isGrabbed = grabbed?.instanceId === card.instanceId;
+              // Singleton lock: while another card is held, this one cannot be
+              // grabbed and is visually muted.
+              const lockedOut = isHoldingCard && mouseDragId !== card.instanceId && !isGrabbed;
               return (
                 <motion.div
                   key={card.instanceId}
@@ -709,14 +712,17 @@ function DrawingStage({
                     "sm-pool-card",
                     isPressing && "is-selected",
                     isGrabbed && "is-grabbed",
+                    lockedOut && "is-locked-out",
                   )}
                   data-gesture-ignore
-                  drag="y"
+                  drag={lockedOut ? false : "y"}
                   dragSnapToOrigin
                   dragConstraints={{ top: -600, bottom: 0 }}
                   dragElastic={0.25}
                   whileDrag={{ scale: 1.14, zIndex: 60 }}
+                  onDragStart={() => setMouseDragId(card.instanceId)}
                   onDragEnd={(_, info) => {
+                    setMouseDragId(null);
                     if (info.offset.y < -90) onDraw(card);
                   }}
                   initial={{ opacity: 0, y: 30 }}
