@@ -393,29 +393,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  border: 2px dashed color-mix(in oklab, var(--gold) 42%, transparent);
-  background: color-mix(in oklab, var(--gold) 4%, transparent);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  /* No frame, no fill, no shadow — never cover the UI art. */
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .sm-slot2.is-target {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 1px var(--gold-soft), 0 0 26px var(--glow-soft);
-  animation: slotPulse 1.8s ease-in-out infinite;
-}
-
-@keyframes slotPulse {
-  0%, 100% { box-shadow: 0 0 0 1px var(--gold-soft), 0 0 16px var(--glow-soft); }
-  50% { box-shadow: 0 0 0 1px var(--gold), 0 0 34px var(--glow-strong); }
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .sm-slot2 img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 9px;
-  filter: drop-shadow(0 12px 26px oklch(0.02 0.01 300 / 60%));
+  background: transparent;
 }
 
 .sm-slot2-label {
@@ -424,7 +420,7 @@
   color: color-mix(in oklab, var(--gold) 72%, transparent);
 }
 
-/* Bottom horizontal pool — single row, no wrap, hidden scrollbar */
+/* Bottom horizontal pool — strict single row, no wrap, hidden scrollbar */
 .sm-pool-wrap {
   flex: 0 0 auto;
   width: 100%;
@@ -432,19 +428,14 @@
 }
 
 .sm-pool {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-  overflow-x: scroll;
+  white-space: nowrap;
+  overflow-x: auto;
   overflow-y: hidden;
-  gap: clamp(0.3rem, 0.8vw, 0.6rem);
+  width: 100%;
   padding: 1rem clamp(1rem, 4vw, 3rem) 0.4rem;
+  background: transparent;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  scroll-snap-type: x proximity;
 }
 
 .sm-pool::-webkit-scrollbar {
@@ -452,20 +443,23 @@
 }
 
 .sm-pool-card {
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  width: clamp(46px, 6vw, 78px);
+  display: inline-block;
+  vertical-align: middle;
+  width: 64px;
   aspect-ratio: 1086 / 1448;
+  margin-right: 6px;
   cursor: grab;
   touch-action: pan-x;
-  scroll-snap-align: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
   will-change: transform;
 }
 
 .sm-pool-card.is-locked-out {
-  opacity: 0.35;
+  opacity: 0.4;
   pointer-events: none;
-  filter: grayscale(0.4);
 }
 
 .sm-pool-card:active {
@@ -473,9 +467,9 @@
 }
 
 .sm-pool-card.is-selected {
-  outline: 2px solid var(--gold);
-  outline-offset: 1px;
-  border-radius: 8px;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .sm-pool-card.is-grabbed {
@@ -486,9 +480,8 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 6px;
+  background: transparent;
   pointer-events: none;
-  filter: drop-shadow(0 8px 16px oklch(0.02 0.01 300 / 65%));
 }
 
 /* Floating card that follows the pointer while dragging */
@@ -539,6 +532,31 @@
   font-size: clamp(0.9rem, 1.6vw, 1.3rem);
   color: var(--gold);
   text-shadow: 0 0 18px var(--glow-strong);
+}
+
+/* "确认解读" button — fades in once every slot is filled */
+.sm-reveal-confirm {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  background: color-mix(in oklab, var(--gold) 16%, transparent);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: clamp(0.9rem, 1.6vw, 1.15rem);
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  box-shadow: 0 0 26px var(--glow-soft);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.sm-reveal-confirm:hover {
+  box-shadow: 0 0 34px var(--glow-strong);
+  transform: translateX(-50%) translateY(-2px);
 }
 
 /* ----- Result / reading ----- */
