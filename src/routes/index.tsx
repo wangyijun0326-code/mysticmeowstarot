@@ -461,16 +461,32 @@ function ShuffleCard({
   spec: ScatterSpec;
   index: number;
 }) {
-  const x = useTransform(energy, (e) => `${spec.dx * e}%`);
-  const y = useTransform(energy, (e) => `${spec.dy * e}%`);
-  const rotate = useTransform(energy, (e) => spec.baseRot + spec.spin * e);
+  // Per-card spring physics layered on the shared energy value: when the
+  // gesture stops, each card eases back / settles with its own damping, giving
+  // an organic "real shuffle" feel instead of a rigid block.
+  const cfg = useMemo(
+    () => ({
+      stiffness: 70 + Math.random() * 90,
+      damping: 11 + Math.random() * 9,
+      mass: 0.5 + Math.random() * 0.5,
+    }),
+    [],
+  );
+  const tx = useTransform(energy, (e) => spec.dx * e);
+  const ty = useTransform(energy, (e) => spec.dy * e);
+  const trot = useTransform(energy, (e) => spec.baseRot + spec.spin * e);
+  const sx = useSpring(tx, cfg);
+  const sy = useSpring(ty, cfg);
+  const srot = useSpring(trot, cfg);
+  const x = useTransform(sx, (v) => `${v}vmin`);
+  const y = useTransform(sy, (v) => `${v}vmin`);
   return (
     <motion.img
       src={BACK_SRC}
       alt=""
       draggable={false}
       className="sm-pile-card"
-      style={{ x, y, rotate, zIndex: index }}
+      style={{ x, y, rotate: srot, zIndex: index }}
     />
   );
 }
