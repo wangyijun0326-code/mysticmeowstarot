@@ -93,8 +93,6 @@
   --shadow: oklch(0.03 0.01 300 / 72%);
   --font-display: "Cinzel", "Noto Serif SC", "Songti SC", "STSong", serif;
   --font-body: "Noto Serif SC", "Cormorant Garamond", "Songti SC", "STSong", serif;
-  --glow-soft: color-mix(in oklab, var(--gold) 30%, transparent);
-  --glow-strong: color-mix(in oklab, var(--gold) 72%, transparent);
 }
 
 .dark {
@@ -144,9 +142,7 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background:
-      radial-gradient(circle at 50% 45%, color-mix(in oklab, var(--plum) 42%, transparent) 0%, transparent 42%),
-      linear-gradient(180deg, color-mix(in oklab, var(--background) 92%, black) 0%, var(--background) 100%);
+    background: var(--background);
     color: var(--color-foreground);
     font-family: var(--font-body);
     letter-spacing: 0;
@@ -170,12 +166,6 @@
   }
 }
 
-/* ============================================================
-   Image-driven state machine (猫咪塔罗)
-   Each state renders its design screenshot as an <img> base layer
-   on a solid dark stage. No CSS background-image full-bleed.
-   ============================================================ */
-
 .sm-root {
   position: relative;
   min-height: 100vh;
@@ -186,22 +176,21 @@
   padding: clamp(0.5rem, 2vw, 2rem);
 }
 
-/* Fixed 16:9 stage that matches the screenshot aspect ratio (1672x941). */
 .sm-stage {
   position: relative;
   width: min(100%, 1320px);
   aspect-ratio: 1672 / 941;
-  background: #0a0710;
-  border-radius: 16px;
+  background: var(--background);
   overflow: hidden;
-  box-shadow:
-    0 30px 90px oklch(0.02 0.01 300 / 70%),
-    0 0 0 1px var(--border);
+}
+
+.sm-base,
+.sm-layer {
+  position: absolute;
+  inset: 0;
 }
 
 .sm-base {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: fill;
@@ -209,44 +198,54 @@
   -webkit-user-drag: none;
 }
 
-.sm-layer {
-  position: absolute;
-  inset: 0;
+.sm-hotspot,
+.sm-back,
+.sm-pill,
+.sm-reset-inline,
+.sm-pool-card,
+.sm-slot-card-wrap,
+.sm-slot-card,
+.sm-reversal-card-wrap,
+.sm-reversal-card,
+.sm-reversal-face,
+.sm-pile-card,
+.sm-end-scroll,
+.sm-end-copy,
+.sm-end-reading-block,
+.sm-end-reading-item {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* Transparent, absolutely positioned clickable hotspots over the screenshot. */
 .sm-hotspot {
   position: absolute;
   transform: translate(-50%, -50%);
-  border: 0;
-  background: transparent;
-  border-radius: 14px;
   cursor: pointer;
-  transition: box-shadow 0.25s ease, background 0.25s ease;
 }
 
-.sm-hotspot:hover {
-  background: color-mix(in oklab, var(--gold) 9%, transparent);
-  box-shadow:
-    0 0 0 1px var(--gold-soft),
-    0 0 28px var(--glow-soft) inset;
+.sm-hotspot:focus-visible,
+.sm-back:focus-visible,
+.sm-reset-inline:focus-visible,
+.sm-pool-card:focus-visible {
+  outline: none;
 }
 
-.sm-hotspot.is-round {
-  border-radius: 999px;
+.sm-back {
+  position: fixed;
+  left: clamp(0.75rem, 2vw, 1.5rem);
+  top: clamp(0.75rem, 2vw, 1.5rem);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.55rem;
+  color: var(--secondary-foreground);
+  cursor: pointer;
 }
 
-.sm-hotspot.is-muted:hover {
-  background: color-mix(in oklab, var(--gold) 4%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--gold) 28%, transparent);
-}
-
-.sm-hotspot:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-/* ----- Shuffle (live physics pile) ----- */
 .sm-shuffle {
   display: flex;
   align-items: center;
@@ -268,175 +267,71 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 8px;
   will-change: transform;
-  filter: drop-shadow(0 10px 22px oklch(0.02 0.01 300 / 55%));
 }
 
-.sm-pile-glow {
+.sm-draw,
+.sm-success,
+.sm-reversal,
+.sm-end {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 240%;
-  height: 240%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow-strong) 0%, transparent 62%);
+  inset: 0;
+}
+
+.sm-slot-layer {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
 }
 
-.sm-shuffle-controls {
+.sm-slot-card-wrap,
+.sm-reversal-card-wrap {
   position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  max-width: 80%;
-  text-align: center;
-  pointer-events: none;
-}
-
-.sm-shuffle-controls .sm-pill {
-  pointer-events: auto;
-}
-
-/* ----- Global back ----- */
-.sm-back {
-  position: fixed;
-  left: clamp(0.75rem, 2vw, 1.5rem);
-  top: clamp(0.75rem, 2vw, 1.5rem);
-  z-index: 60;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.4rem 0.9rem 0.4rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--secondary);
-  color: var(--secondary-foreground);
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
-}
-
-.sm-back:hover {
-  box-shadow: 0 0 0 1px var(--gold-soft), 0 0 18px var(--glow-soft);
-  transform: translateY(-1px);
-}
-
-
-
-.sm-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--secondary);
-  color: var(--secondary-foreground);
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sm-pill:hover {
-  box-shadow: 0 0 0 1px var(--gold-soft), 0 0 22px var(--glow-soft);
-}
-
-.sm-status {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: clamp(0.72rem, 1.1vw, 0.95rem);
-  color: var(--muted-foreground);
-}
-
-/* ----- Drawing: split top (slots) / bottom (horizontal pool) ----- */
-.sm-draw {
-  display: flex;
-  flex-direction: column;
-}
-
-.sm-draw-top {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.8rem, 2vh, 1.6rem);
-  padding: 4% 4% 0;
-  text-align: center;
-}
-
-.sm-slots {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.6rem, 2vw, 1.6rem);
-  max-width: 100%;
-}
-
-.sm-slot2 {
-  flex: 0 0 auto;
-  width: clamp(56px, 9vw, 116px);
   aspect-ratio: 1086 / 1448;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* No frame, no fill, no shadow — never cover the UI art. */
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  outline: none;
+  transform: translate(-50%, -50%);
 }
 
-.sm-slot2.is-target {
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  outline: none;
-}
-
-.sm-slot2 img {
+.sm-slot-card,
+.sm-reversal-face img,
+.sm-pile-card,
+.sm-pool-card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background: transparent;
+  aspect-ratio: 1086 / 1448;
 }
 
-.sm-slot2-label {
-  font-family: var(--font-display);
-  font-size: clamp(1rem, 2vw, 1.6rem);
-  color: color-mix(in oklab, var(--gold) 72%, transparent);
-}
-
-/* Bottom carousel — wrapper clips, inner track drags horizontally (drag="x") */
 .sm-pool-wrap {
-  flex: 0 0 auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3.1%;
   width: 100%;
-  overflow: hidden;
-  padding-bottom: clamp(0.6rem, 2vh, 1.4rem);
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-inline: 0;
+}
+
+.sm-pool-wrap::-webkit-scrollbar,
+.sm-end-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .sm-pool {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: visible !important;
+  overflow-y: hidden !important;
   align-items: center;
   width: max-content;
-  padding: 1rem clamp(1rem, 4vw, 3rem) 0.4rem;
-  background: transparent;
+  padding: 0.5rem 1rem 0.2rem;
   cursor: grab;
+  white-space: nowrap;
+  touch-action: pan-x;
+  gap: 0;
 }
 
 .sm-pool:active {
@@ -444,379 +339,137 @@
 }
 
 .sm-pool-card {
-  flex: 0 0 auto;
-  width: 64px;
+  display: inline-block;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  width: 80px;
   aspect-ratio: 1086 / 1448;
-  margin-right: 6px;
+  margin-right: 8px;
+  padding: 0;
   cursor: grab;
   touch-action: none;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  outline: none;
-  will-change: transform;
-}
-
-.sm-pool-card.is-locked-out {
-  opacity: 0.4;
-  pointer-events: none;
+  position: relative;
 }
 
 .sm-pool-card:active {
   cursor: grabbing;
 }
 
-.sm-pool-card.is-selected {
-  border: none;
-  outline: none;
-  box-shadow: none;
+.sm-reversal-card-wrap {
+  perspective: 1400px;
 }
 
-.sm-pool-card.is-grabbed {
-  opacity: 0.25;
-}
-
-.sm-pool-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: transparent;
-  pointer-events: none;
-}
-
-/* Floating card that follows the pointer while dragging */
-.sm-drag-card {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 80px;
-  margin-left: -40px;
-  margin-top: -56px;
-  aspect-ratio: 1086 / 1448;
-  z-index: 9000;
-  pointer-events: none;
-  opacity: 0;
-  will-change: transform;
-}
-
-.sm-drag-card.is-active {
-  opacity: 1;
-}
-
-.sm-drag-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-  filter: drop-shadow(0 18px 32px oklch(0.02 0.01 300 / 75%));
-}
-
-
-
-/* ----- Reveal (tap to flip) ----- */
-.sm-reveal-hit {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 6%;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.sm-reveal-hint {
-  font-family: var(--font-display);
-  letter-spacing: 0.22em;
-  font-size: clamp(0.9rem, 1.6vw, 1.3rem);
-  color: var(--gold);
-  text-shadow: 0 0 18px var(--glow-strong);
-}
-
-/* "确认解读" button — fades in once every slot is filled */
-.sm-reveal-confirm {
-  position: absolute;
-  left: 50%;
-  bottom: 8%;
-  transform: translateX(-50%);
-  z-index: 40;
-  padding: 0.7rem 2rem;
-  border-radius: 999px;
-  border: 1px solid var(--gold);
-  background: color-mix(in oklab, var(--gold) 16%, transparent);
-  color: var(--gold);
-  font-family: var(--font-display);
-  font-size: clamp(0.9rem, 1.6vw, 1.15rem);
-  letter-spacing: 0.18em;
-  cursor: pointer;
-  box-shadow: 0 0 26px var(--glow-soft);
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
-}
-
-.sm-reveal-confirm:hover {
-  box-shadow: 0 0 34px var(--glow-strong);
-  transform: translateX(-50%) translateY(-2px);
-}
-
-/* ----- Reversal (swipe-right → full-screen 3D flip) ----- */
-.sm-reversal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sm-flip-scene {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 1600px;
-  pointer-events: none;
-}
-
-.sm-flip-card {
+.sm-reversal-card {
   position: relative;
-  width: 86%;
-  height: 70%;
+  width: 100%;
+  height: 100%;
   transform-style: preserve-3d;
 }
 
-.sm-flip-face {
+.sm-reversal-face {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   backface-visibility: hidden;
 }
 
-.sm-flip-back {
+.sm-reversal-back {
   transform: rotateY(180deg);
 }
 
-.sm-flip-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(0.6rem, 2.5vw, 2rem);
-  width: 100%;
-}
-
-.sm-flip-row img {
-  width: clamp(80px, 14vw, 170px);
-  aspect-ratio: 1086 / 1448;
-  object-fit: contain;
-  border-radius: 12px;
-  box-shadow: 0 18px 44px oklch(0.02 0.01 300 / 70%);
-}
-
-.sm-flip-row img.is-reversed {
+.sm-slot-card.is-reversed,
+.sm-reversal-face img.is-reversed {
   transform: rotate(180deg);
 }
 
-.sm-swipe-hit {
+.sm-end-scroll {
   position: absolute;
-  inset: 0;
+  top: 20%;
+  left: 0;
+  width: 100%;
+  height: 70%;
+  overflow-y: scroll !important;
+  overflow-x: hidden;
+  padding: 0 0 4% 0;
+}
+
+.sm-end-copy {
+  width: min(100%, 900px);
+  margin: 0 auto;
+  padding: 0 6% 4%;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 6%;
-  background: transparent;
-  border: 0;
+  flex-direction: column;
+  gap: 1rem;
+  color: var(--foreground);
+}
+
+.sm-end-kicker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.85rem, 1.4vw, 1rem);
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+
+.sm-reset-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0;
+  color: var(--gold);
   cursor: pointer;
 }
 
-/* ----- End (reading) — scrollable overlay over the end screenshot ----- */
-.sm-end {
-  display: flex;
-  justify-content: center;
-}
-
-.sm-end-panel {
-  position: absolute;
-  inset: 0;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.sm-end-cards-text {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.2rem, 3vw, 2.2rem);
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem);
-  background: linear-gradient(
-    to bottom,
-    oklch(0.04 0.02 300 / 78%),
-    oklch(0.04 0.02 300 / 92%)
-  );
+  gap: 0.35rem;
 }
 
-.sm-end-panel::-webkit-scrollbar {
-  display: none;
-}
-
-
-.sm-result {
-  width: min(100%, 1100px);
-  margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.5rem, 3vw, 2.5rem);
-}
-
-.sm-result-head {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.sm-kicker {
+.sm-end-cards-text p,
+.sm-end-reading-item p,
+.sm-end-summary {
   margin: 0;
-  font-family: var(--font-display);
-  letter-spacing: 0.3em;
-  font-size: 0.78rem;
-  color: var(--gold-soft);
-}
-
-.sm-result-head h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 4vw, 2.6rem);
-  color: var(--gold);
-  text-shadow: 0 0 26px var(--glow-soft);
-}
-
-.sm-sub {
-  margin: 0;
-  color: var(--muted-foreground);
-}
-
-.sm-result-head .sm-pill {
-  margin-top: 0.6rem;
-}
-
-.sm-card-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: clamp(0.6rem, 2vw, 1.4rem);
-  perspective: 1200px;
-}
-
-.sm-result-card {
-  margin: 0;
-  width: clamp(120px, 16vw, 180px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  transform-style: preserve-3d;
-}
-
-.sm-result-card img {
-  width: 100%;
-  aspect-ratio: 1086 / 1448;
-  object-fit: contain;
-  border-radius: 12px;
-  box-shadow: 0 16px 40px oklch(0.02 0.01 300 / 65%);
-}
-
-.sm-result-card img.is-reversed {
-  transform: rotate(180deg);
-}
-
-.sm-result-card figcaption {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  text-align: center;
-}
-
-.sm-pos {
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  color: var(--gold-soft);
-}
-
-.sm-result-card strong {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  color: var(--foreground);
-}
-
-.sm-reading {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: clamp(1.2rem, 3vw, 2rem);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  box-shadow: 0 20px 60px oklch(0.02 0.01 300 / 50%);
-}
-
-.sm-reading-kicker {
-  margin: 0;
-  font-family: var(--font-display);
-  letter-spacing: 0.22em;
-  font-size: 0.74rem;
-  color: var(--gold-soft);
-}
-
-.sm-reading-summary {
-  margin: 0;
-  font-size: clamp(1rem, 1.8vw, 1.2rem);
   line-height: 1.7;
-  color: var(--foreground);
+  font-size: clamp(0.95rem, 1.45vw, 1.08rem);
 }
 
-.sm-reading-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.sm-reading-item {
-  background: var(--secondary);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
-}
-
-.sm-reading-item h3 {
-  margin: 0 0 0.4rem;
+.sm-end-cards-text strong,
+.sm-end-reading-item h2 {
   font-family: var(--font-display);
-  font-size: 0.98rem;
   color: var(--gold);
 }
 
-.sm-reading-item p {
+.sm-end-cards-text span {
+  margin-left: 0.5rem;
+}
+
+.sm-end-reading-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sm-end-reading-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sm-end-reading-item h2 {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: var(--muted-foreground);
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
 }
 
 @media (max-width: 640px) {
-  .sm-stage {
-    border-radius: 12px;
+  .sm-pool-wrap {
+    bottom: 1.8%;
   }
-  .sm-shuffle-controls {
-    max-width: 88%;
-  }
-  .gesture-cam {
-    width: 96px;
+
+  .sm-pool-card {
+    width: 64px;
   }
 }
-
-/* ============================================================
-   Global gesture system — virtual cursor overlay + corner HUD
-   ============================================================ */
 
 .gesture-overlay {
   position: fixed;
@@ -845,15 +498,13 @@
   inset: 0;
   border-radius: 999px;
   background: radial-gradient(circle, var(--gold) 0%, color-mix(in oklab, var(--gold) 30%, transparent) 55%, transparent 72%);
-  box-shadow: 0 0 18px var(--glow-soft);
   transform: scale(0.6);
-  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .gesture-cursor.is-hot .gesture-cursor-dot {
   transform: scale(1);
   background: radial-gradient(circle, oklch(0.92 0.05 92) 0%, var(--gold) 50%, transparent 75%);
-  box-shadow: 0 0 28px var(--glow-strong);
 }
 
 .gesture-cursor.is-pinch .gesture-cursor-dot {
@@ -890,11 +541,8 @@
 .gesture-cam {
   width: 132px;
   aspect-ratio: 4 / 3;
-  border-radius: 10px;
   object-fit: cover;
   transform: scaleX(-1);
-  border: 1px solid var(--border);
-  box-shadow: 0 8px 24px oklch(0.02 0.01 300 / 60%);
   opacity: 0.9;
 }
 
@@ -906,19 +554,8 @@
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--secondary);
   color: var(--secondary-foreground);
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: box-shadow 0.2s ease;
-}
-
-.gesture-toggle:hover {
-  box-shadow: 0 0 0 1px var(--gold-soft), 0 0 18px var(--glow-soft);
 }
 
 .gesture-status {
@@ -929,21 +566,3 @@
   line-height: 1.4;
   color: var(--muted-foreground);
 }
-
-.gesture-pulse {
-  animation: gesturePulse 0.32s ease-out;
-}
-
-@keyframes gesturePulse {
-  0% {
-    filter: brightness(1);
-  }
-  45% {
-    filter: brightness(1.35) drop-shadow(0 0 14px var(--glow-strong));
-  }
-  100% {
-    filter: brightness(1);
-  }
-}
-
-
