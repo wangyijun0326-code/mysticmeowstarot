@@ -703,7 +703,6 @@ function DrawingStage({
               return (
                 <motion.div
                   key={card.instanceId}
-                  layout
                   ref={(el) => {
                     if (el) cardRefs.current.set(card.instanceId, el);
                     else cardRefs.current.delete(card.instanceId);
