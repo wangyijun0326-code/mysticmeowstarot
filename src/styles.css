@@ -420,26 +420,27 @@
   color: color-mix(in oklab, var(--gold) 72%, transparent);
 }
 
-/* Bottom horizontal pool — strict single row, no wrap, hidden scrollbar */
+/* Bottom carousel — wrapper clips, inner track drags horizontally (drag="x") */
 .sm-pool-wrap {
   flex: 0 0 auto;
   width: 100%;
+  overflow: hidden;
   padding-bottom: clamp(0.6rem, 2vh, 1.4rem);
 }
 
 .sm-pool {
-  white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: max-content;
   padding: 1rem clamp(1rem, 4vw, 3rem) 0.4rem;
   background: transparent;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  cursor: grab;
 }
 
-.sm-pool::-webkit-scrollbar {
-  display: none;
+.sm-pool:active {
+  cursor: grabbing;
 }
 
 .sm-pool-card {
