@@ -88,17 +88,21 @@ function Index() {
     return null; // SHUFFLE renders a live physics pile, not a static image.
   }, [gameState, spreadId, successFlash, revealed]);
 
-  // When enough cards are drawn, flash the "success" screenshot, then move to reveal.
+  // Jump straight into the reveal/interpretation phase.
+  const goToReveal = useCallback(() => {
+    setSuccessFlash(false);
+    setRevealed(false);
+    setGameState("REVEAL");
+  }, []);
+
+  // When every slot is filled: flash the "success" art, then auto-advance to
+  // the reveal phase after 1s (the on-screen "确认解读" button can skip the wait).
   useEffect(() => {
     if (gameState !== "DRAWING" || !isDrawComplete) return;
     setSuccessFlash(true);
-    const id = window.setTimeout(() => {
-      setSuccessFlash(false);
-      setRevealed(false);
-      setGameState("REVEAL");
-    }, 1200);
+    const id = window.setTimeout(goToReveal, 1000);
     return () => window.clearTimeout(id);
-  }, [gameState, isDrawComplete]);
+  }, [gameState, isDrawComplete, goToReveal]);
 
   const chooseSpread = (next: SpreadId) => {
     setSpreadId(next);
