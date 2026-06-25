@@ -41,8 +41,21 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-/** Application state machine. Each state binds to a design screenshot. */
-type GameState = "MENU" | "SPREAD_SELECTION" | "SHUFFLE" | "DRAWING" | "REVEAL";
+/**
+ * Universal application state machine — identical for One / Three / Five card
+ * spreads. Each phase binds to a design screenshot resolved dynamically from
+ * the active spread (see baseImage below).
+ *
+ *   MENU → SPREAD_SELECTION → SHUFFLE → DRAWING → SUCCESS → REVERSAL → END
+ */
+type GameState =
+  | "MENU"
+  | "SPREAD_SELECTION"
+  | "SHUFFLE"
+  | "DRAWING"
+  | "SUCCESS"
+  | "REVERSAL"
+  | "END";
 
 type SessionDeckCard = ReturnType<typeof createSessionDeck>[number];
 
@@ -56,13 +69,12 @@ function Index() {
   const [deck, setDeck] = useState<SessionDeckCard[]>(() => createSessionDeck());
   const [drawnCards, setDrawnCards] = useState<DrawnCard[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [successFlash, setSuccessFlash] = useState(false);
-  const [revealed, setRevealed] = useState(false);
   const [reading, setReading] = useState<
     { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null
   >(null);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
   const [readingError, setReadingError] = useState<string | null>(null);
+  const readingRequested = useRef(false);
 
   const spread = spreadId ? SPREADS[spreadId] : null;
   const requiredCount = spread?.positions.length ?? 0;
@@ -73,36 +85,59 @@ function Index() {
     [deck, selectedIds],
   );
 
-  // The screenshot bound to the current state (null => CSS dark result stage).
+  // Dynamic asset mapping — the same logic resolves the right screenshot for
+  // every spread type (one / three / five) and every phase.
   const baseImage = useMemo(() => {
     if (gameState === "MENU") return assetUrl("menu.png");
     if (gameState === "SPREAD_SELECTION") return assetUrl("spreads.png");
-    if (gameState === "DRAWING" && spreadId) {
-      // Drawing uses a real DOM layout (slots + horizontal pool), not a full
-      // screenshot background. Only flash the "success" art when complete.
-      return successFlash ? assetUrl(SPREAD_ASSETS[spreadId].success) : null;
-    }
-    if (gameState === "REVEAL" && spreadId && !revealed) {
-      return assetUrl(SPREAD_ASSETS[spreadId].reversal);
-    }
-    return null; // SHUFFLE renders a live physics pile, not a static image.
-  }, [gameState, spreadId, successFlash, revealed]);
+    if (gameState === "SHUFFLE") return assetUrl("wash.png");
+    if (!spreadId) return null;
+    const a = SPREAD_ASSETS[spreadId];
+    if (gameState === "SUCCESS") return assetUrl(a.success);
+    if (gameState === "REVERSAL") return assetUrl(a.reversal);
+    if (gameState === "END") return assetUrl(a.end);
+    return null; // DRAWING renders a live DOM layout, not a screenshot.
+  }, [gameState, spreadId]);
 
-  // Jump straight into the reveal/interpretation phase.
-  const goToReveal = useCallback(() => {
-    setSuccessFlash(false);
-    setRevealed(false);
-    setGameState("REVEAL");
-  }, []);
+  // ---- AI reading: requested once, when we enter the END phase ----
+  const runReading = useCallback(async () => {
+    if (!spread || readingRequested.current) return;
+    readingRequested.current = true;
+    setIsLoadingReading(true);
+    setReadingError(null);
+    try {
+      const response = await generateTarotReading({
+        data: {
+          spread: `${spread.title}（${spread.subtitle}）`,
+          cards: drawnCards.map((c) => ({ position: c.position, name: c.name, state: c.state })),
+        },
+      });
+      setReading(response);
+    } catch (error) {
+      console.error("Tarot reading generation failed:", error);
+      setReadingError("解读暂时无法生成，先看看你抽到的牌吧。");
+    } finally {
+      setIsLoadingReading(false);
+    }
+  }, [spread, drawnCards]);
 
-  // When every slot is filled: flash the "success" art, then auto-advance to
-  // the reveal phase after 1s (the on-screen "确认解读" button can skip the wait).
+  // Phase 3 trigger: once every required slot is filled → SUCCESS.
   useEffect(() => {
-    if (gameState !== "DRAWING" || !isDrawComplete) return;
-    setSuccessFlash(true);
-    const id = window.setTimeout(goToReveal, 1000);
+    if (gameState === "DRAWING" && isDrawComplete) setGameState("SUCCESS");
+  }, [gameState, isDrawComplete]);
+
+  // SUCCESS → REVERSAL automatically after the confirmation art lingers 1.5s.
+  useEffect(() => {
+    if (gameState !== "SUCCESS") return;
+    const id = window.setTimeout(() => setGameState("REVERSAL"), 1500);
     return () => window.clearTimeout(id);
-  }, [gameState, isDrawComplete, goToReveal]);
+  }, [gameState]);
+
+  // REVERSAL → END (kick off the reading on entry).
+  const goToEnd = useCallback(() => {
+    setGameState("END");
+    void runReading();
+  }, [runReading]);
 
   const chooseSpread = (next: SpreadId) => {
     setSpreadId(next);
@@ -111,8 +146,7 @@ function Index() {
     setDrawnCards([]);
     setReading(null);
     setReadingError(null);
-    setSuccessFlash(false);
-    setRevealed(false);
+    readingRequested.current = false;
     setGameState("SHUFFLE");
   };
 
@@ -123,7 +157,7 @@ function Index() {
 
   const drawCard = useCallback(
     (card: SessionDeckCard) => {
-      if (!spread || successFlash) return;
+      if (!spread) return;
       setSelectedIds((prevSel) => {
         if (prevSel.includes(card.instanceId)) return prevSel;
         if (prevSel.length >= spread.positions.length) return prevSel;
@@ -141,29 +175,8 @@ function Index() {
         return [...prevSel, card.instanceId];
       });
     },
-    [spread, successFlash],
+    [spread],
   );
-
-  const revealNow = async () => {
-    if (!spread || revealed) return;
-    setRevealed(true);
-    setIsLoadingReading(true);
-    setReadingError(null);
-    try {
-      const response = await generateTarotReading({
-        data: {
-          spread: `${spread.title}（${spread.subtitle}）`,
-          cards: drawnCards.map((c) => ({ position: c.position, name: c.name, state: c.state })),
-        },
-      });
-      setReading(response);
-    } catch (error) {
-      console.error("Tarot reading generation failed:", error);
-      setReadingError("解读暂时无法生成，先看看你抽到的牌吧。");
-    } finally {
-      setIsLoadingReading(false);
-    }
-  };
 
   const resetAll = useCallback(() => {
     setSpreadId(null);
@@ -173,8 +186,7 @@ function Index() {
     setReading(null);
     setReadingError(null);
     setIsLoadingReading(false);
-    setSuccessFlash(false);
-    setRevealed(false);
+    readingRequested.current = false;
     setGameState("MENU");
   }, []);
 
@@ -187,25 +199,16 @@ function Index() {
         case "SHUFFLE":
           return "SPREAD_SELECTION";
         case "DRAWING":
+        case "SUCCESS":
+        case "REVERSAL":
           setSelectedIds([]);
           setDrawnCards([]);
-          setSuccessFlash(false);
           return "SHUFFLE";
-        case "REVEAL":
-          if (revealed) {
-            setRevealed(false);
-            setReading(null);
-            setReadingError(null);
-            return "REVEAL";
-          }
-          setSelectedIds([]);
-          setDrawnCards([]);
-          return "DRAWING";
         default:
           return current;
       }
     });
-  }, [revealed]);
+  }, []);
 
   // Edge-swipe (left → right) from the global gesture layer triggers back.
   useEffect(() => {
@@ -214,68 +217,56 @@ function Index() {
     return () => window.removeEventListener("gesture:back", handler as EventListener);
   }, [goBack]);
 
-  const showResult = gameState === "REVEAL" && revealed;
+  const showResult = gameState === "END";
 
   return (
     <div className="sm-root">
       {gameState !== "MENU" && (
-        <GlobalBackButton onBack={showResult ? resetAll : goBack} label={showResult ? "重新占卜" : "返回"} />
-      )}
-
-      {showResult && spread && spreadId ? (
-        <RevealResult
-          spreadId={spreadId}
-          drawnCards={drawnCards}
-          reading={reading}
-          isLoading={isLoadingReading}
-          error={readingError}
-          onReset={resetAll}
+        <GlobalBackButton
+          onBack={showResult ? resetAll : goBack}
+          label={showResult ? "重新占卜" : "返回"}
         />
-      ) : (
-        <div className="sm-stage">
-          {baseImage && (
-            <img className="sm-base" src={baseImage} alt="" draggable={false} aria-hidden="true" />
-          )}
-
-          <AnimatePresence>
-            {gameState === "MENU" && (
-              <MenuOverlay key="menu" onStart={() => setGameState("SPREAD_SELECTION")} />
-            )}
-            {gameState === "SPREAD_SELECTION" && (
-              <SpreadOverlay key="spreads" onChoose={chooseSpread} />
-            )}
-            {gameState === "SHUFFLE" && <ShuffleStage key="shuffle" onDone={finishShuffle} />}
-            {gameState === "DRAWING" && spreadId && (
-              <DrawingStage
-                key="drawing"
-                spreadId={spreadId}
-                drawnCards={drawnCards}
-                railDeck={railDeck}
-                onDraw={drawCard}
-                locked={successFlash || isDrawComplete}
-              />
-            )}
-            {gameState === "DRAWING" && isDrawComplete && (
-              <motion.button
-                key="confirm-reveal"
-                type="button"
-                className="sm-reveal-confirm"
-                onClick={goToReveal}
-                data-gesture
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ delay: 0.15 }}
-              >
-                确认解读
-              </motion.button>
-            )}
-            {gameState === "REVEAL" && !revealed && (
-              <RevealBackOverlay key="reveal-back" onReveal={revealNow} />
-            )}
-          </AnimatePresence>
-        </div>
       )}
+
+      <div className="sm-stage">
+        {baseImage && (
+          <img className="sm-base" src={baseImage} alt="" draggable={false} aria-hidden="true" />
+        )}
+
+        <AnimatePresence>
+          {gameState === "MENU" && (
+            <MenuOverlay key="menu" onStart={() => setGameState("SPREAD_SELECTION")} />
+          )}
+          {gameState === "SPREAD_SELECTION" && (
+            <SpreadOverlay key="spreads" onChoose={chooseSpread} />
+          )}
+          {gameState === "SHUFFLE" && <ShuffleStage key="shuffle" onDone={finishShuffle} />}
+          {gameState === "DRAWING" && spreadId && (
+            <DrawingStage
+              key="drawing"
+              spreadId={spreadId}
+              drawnCards={drawnCards}
+              railDeck={railDeck}
+              onDraw={drawCard}
+              locked={isDrawComplete}
+            />
+          )}
+          {gameState === "REVERSAL" && spreadId && (
+            <ReversalStage key="reversal" drawnCards={drawnCards} onRevealed={goToEnd} />
+          )}
+          {gameState === "END" && spread && spreadId && (
+            <EndStage
+              key="end"
+              spread={spread}
+              drawnCards={drawnCards}
+              reading={reading}
+              isLoading={isLoadingReading}
+              error={readingError}
+              onReset={resetAll}
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -551,6 +542,8 @@ function DrawingStage({
   const stageRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const floatRef = useRef<HTMLDivElement | null>(null);
+  // Wrapper that clips the carousel; the inner track drags horizontally within it.
+  const poolWrapRef = useRef<HTMLDivElement | null>(null);
 
   const [pressId, setPressId] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<SessionDeckCard | null>(null);
@@ -709,10 +702,16 @@ function DrawingStage({
         </p>
       </div>
 
-      {/* ---------- Bottom zone: single-row horizontal card pool ---------- */}
+      {/* ---------- Bottom zone: drag-x carousel of the 78-card deck ---------- */}
       {!locked && (
-        <div className="sm-pool-wrap" aria-label={`${spread.title} 牌堆`}>
-          <div className="sm-pool">
+        <div className="sm-pool-wrap" ref={poolWrapRef} aria-label={`${spread.title} 牌堆`}>
+          <motion.div
+            className="sm-pool"
+            drag="x"
+            dragConstraints={poolWrapRef}
+            dragElastic={0.06}
+            dragMomentum
+          >
             {railDeck.map((card) => {
               const isPressing = pressId === card.instanceId;
               const isGrabbed = grabbed?.instanceId === card.instanceId;
@@ -741,7 +740,8 @@ function DrawingStage({
                   onDragStart={() => setMouseDragId(card.instanceId)}
                   onDragEnd={(_, info) => {
                     setMouseDragId(null);
-                    if (info.offset.y < -90) onDraw(card);
+                    // Drag-up past 50px → fly the card into the next empty slot.
+                    if (info.offset.y < -50) onDraw(card);
                   }}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -751,7 +751,7 @@ function DrawingStage({
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -763,42 +763,112 @@ function DrawingStage({
   );
 }
 
-/* ----------------------------------------------------------- REVEAL BACK */
+/* ------------------------------------------------ REVERSAL (swipe to flip) */
 
-function RevealBackOverlay({ onReveal }: { onReveal: () => void }) {
+function ReversalStage({
+  drawnCards,
+  onRevealed,
+}: {
+  drawnCards: DrawnCard[];
+  onRevealed: () => void;
+}) {
+  const { pointerRef } = useGesture();
+  const [flipped, setFlipped] = useState(false);
+  const flippedRef = useRef(false);
+
+  const trigger = useCallback(() => {
+    if (flippedRef.current) return;
+    flippedRef.current = true;
+    setFlipped(true);
+    window.setTimeout(onRevealed, 1100);
+  }, [onRevealed]);
+
+  // Swipe-right detection (hand): track left→right horizontal travel.
+  useEffect(() => {
+    let raf = 0;
+    const buf: Array<{ x: number; t: number }> = [];
+    const loop = () => {
+      const p = pointerRef.current;
+      const now = performance.now();
+      if (p.handActive) {
+        buf.push({ x: p.x, t: now });
+        while (buf.length && now - buf[0].t > 500) buf.shift();
+        if (buf.length > 3 && !flippedRef.current) {
+          const dx = buf[buf.length - 1].x - buf[0].x;
+          if (dx > window.innerWidth * 0.22) trigger();
+        }
+      } else {
+        buf.length = 0;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [pointerRef, trigger]);
+
   return (
-    <motion.button
-      type="button"
-      className="sm-reveal-hit"
-      onClick={onReveal}
-      data-gesture
+    <motion.div
+      className="sm-layer sm-reversal"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      aria-label="翻开牌面"
     >
-      <motion.span
-        className="sm-reveal-hint"
-        animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
-      >
-        捏合或悬停翻牌
-      </motion.span>
-    </motion.button>
+      {/* Full-stage 3D flip surface */}
+      <div className="sm-flip-scene">
+        <motion.div
+          className="sm-flip-card"
+          animate={{ rotateY: flipped ? 180 : 0 }}
+          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <div className="sm-flip-face sm-flip-front">
+            <div className="sm-flip-row">
+              {drawnCards.map((card) => (
+                <img key={card.position} src={BACK_SRC} alt="" draggable={false} />
+              ))}
+            </div>
+          </div>
+          <div className="sm-flip-face sm-flip-back">
+            <div className="sm-flip-row">
+              {drawnCards.map((card) => (
+                <img
+                  key={card.position}
+                  src={getCardFrontPath(card.number)}
+                  alt={`${card.name}${card.state}`}
+                  className={cn(card.state === "逆位" && "is-reversed")}
+                  draggable={false}
+                />
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {!flipped && (
+        <button type="button" className="sm-swipe-hit" onClick={trigger} data-gesture aria-label="向右滑动揭晓">
+          <motion.span
+            className="sm-reveal-hint"
+            animate={{ opacity: [0.5, 1, 0.5], x: [0, 14, 0] }}
+            transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
+          >
+            向右滑动揭晓 →
+          </motion.span>
+        </button>
+      )}
+    </motion.div>
   );
 }
 
-/* --------------------------------------------------------- REVEAL RESULT */
+/* --------------------------------------------------------- END (reading) */
 
-function RevealResult({
-  spreadId,
+function EndStage({
+  spread,
   drawnCards,
   reading,
   isLoading,
   error,
   onReset,
 }: {
-  spreadId: SpreadId;
+  spread: (typeof SPREADS)[SpreadId];
   drawnCards: DrawnCard[];
   reading:
     | { summary: string; perCard: Array<{ position: string; title: string; text: string }> }
@@ -808,18 +878,19 @@ function RevealResult({
   onReset: () => void;
 }) {
   const { pointerRef } = useGesture();
-  const spread = SPREADS[spreadId];
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Hand vertical pan → smooth scroll (no click-to-page).
+  // Hand vertical pan → smooth scroll the reading panel (no click-to-page).
   useEffect(() => {
     let raf = 0;
     let lastY: number | null = null;
     const loop = () => {
       const p = pointerRef.current;
-      if (p.handActive && !p.down) {
+      const el = scrollRef.current;
+      if (el && p.handActive && !p.down) {
         if (lastY !== null) {
           const dy = p.y - lastY;
-          if (Math.abs(dy) > 1) window.scrollBy({ top: dy * 2.2 });
+          if (Math.abs(dy) > 1) el.scrollBy({ top: dy * 2.4 });
         }
         lastY = p.y;
       } else {
@@ -832,64 +903,66 @@ function RevealResult({
   }, [pointerRef]);
 
   return (
-    <motion.section
-      className="sm-result"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={spring}
+    <motion.div
+      className="sm-layer sm-end"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      <header className="sm-result-head">
-        <p className="sm-kicker">{spread.title}</p>
-        <h1>{spread.interpretationTitle}</h1>
-        <p className="sm-sub">{spread.subtitle}</p>
-        <button type="button" className="sm-pill" onClick={onReset} data-gesture>
-          <RotateCcw className="size-4" /> 重新占卜
-        </button>
-      </header>
+      <div className="sm-end-panel" ref={scrollRef}>
+        <header className="sm-result-head">
+          <p className="sm-kicker">{spread.title}</p>
+          <h1>{spread.interpretationTitle}</h1>
+          <p className="sm-sub">{spread.subtitle}</p>
+          <button type="button" className="sm-pill" onClick={onReset} data-gesture>
+            <RotateCcw className="size-4" /> 重新占卜
+          </button>
+        </header>
 
-      <div className="sm-card-row">
-        {drawnCards.map((card, index) => (
-          <motion.figure
-            key={card.position}
-            className="sm-result-card"
-            initial={{ rotateY: 90, opacity: 0 }}
-            animate={{ rotateY: 0, opacity: 1 }}
-            transition={{ ...spring, delay: index * 0.16 }}
-          >
-            <img
-              src={getCardFrontPath(card.number)}
-              alt={`${card.name}${card.state}`}
-              className={cn(card.state === "逆位" && "is-reversed")}
-              draggable={false}
-            />
-            <figcaption>
-              <span className="sm-pos">{card.position}</span>
-              <strong>
-                {card.name} · {card.state}
-              </strong>
-            </figcaption>
-          </motion.figure>
-        ))}
-      </div>
+        <div className="sm-card-row">
+          {drawnCards.map((card, index) => (
+            <motion.figure
+              key={card.position}
+              className="sm-result-card"
+              initial={{ rotateY: 90, opacity: 0 }}
+              animate={{ rotateY: 0, opacity: 1 }}
+              transition={{ ...spring, delay: index * 0.14 }}
+            >
+              <img
+                src={getCardFrontPath(card.number)}
+                alt={`${card.name}${card.state}`}
+                className={cn(card.state === "逆位" && "is-reversed")}
+                draggable={false}
+              />
+              <figcaption>
+                <span className="sm-pos">{card.position}</span>
+                <strong>
+                  {card.name} · {card.state}
+                </strong>
+              </figcaption>
+            </motion.figure>
+          ))}
+        </div>
 
-      <div className="sm-reading">
-        <p className="sm-reading-kicker">AI 中性深度解读</p>
-        <p className="sm-reading-summary">
-          {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
-        </p>
-        <div className="sm-reading-grid">
-          {drawnCards.map((card) => {
-            const item = reading?.perCard.find((entry) => entry.position === card.position);
-            return (
-              <article key={card.position} className="sm-reading-item">
-                <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
-                <p>{item?.text ?? (isLoading ? "" : "—")}</p>
-              </article>
-            );
-          })}
+        <div className="sm-reading">
+          <p className="sm-reading-kicker">AI 中性深度解读</p>
+          <p className="sm-reading-summary">
+            {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
+          </p>
+          <div className="sm-reading-grid">
+            {drawnCards.map((card) => {
+              const item = reading?.perCard.find((entry) => entry.position === card.position);
+              return (
+                <article key={card.position} className="sm-reading-item">
+                  <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
+                  <p>{item?.text ?? (isLoading ? "" : "—")}</p>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </motion.section>
+    </motion.div>
   );
 }
 
