@@ -106,33 +106,15 @@ export function useHandTracking(enabled: boolean) {
             if (hand && hand[8]) {
               const tip = hand[8]; // index fingertip
               const thumb = hand[4]; // thumb tip
-              const wrist = hand[0];
-              const midMcp = hand[9]; // middle-finger base knuckle
-              // Hand scale = wrist → middle-finger base. Normalising the pinch
-              // distance by this makes detection independent of how close the
-              // hand is to the camera, which is what caused open / relaxed hands
-              // to read as a pinch and auto-fire on hover.
-              const scale =
-                Math.hypot(
-                  (midMcp?.x ?? tip.x) - (wrist?.x ?? tip.x),
-                  (midMcp?.y ?? tip.y) - (wrist?.y ?? tip.y),
-                ) || 0.2;
-              const pinchDist = Math.hypot(
-                (thumb?.x ?? tip.x) - tip.x,
-                (thumb?.y ?? tip.y) - tip.y,
-              );
-              const ratio = pinchDist / scale;
-              // Hysteresis: engage only when clearly closed (<0.45 of hand
-              // scale), release only when clearly open (>0.62). This kills the
-              // flicker that fired buttons just by hovering.
-              const wasPinch = cursorRef.current.pinch;
-              const pinch = wasPinch ? ratio < 0.62 : ratio < 0.45;
+              const dx = (thumb?.x ?? tip.x) - tip.x;
+              const dy = (thumb?.y ?? tip.y) - tip.y;
+              const pinchDist = Math.hypot(dx, dy);
               cursorRef.current = {
                 // Mirror X so it tracks like a mirror.
                 x: 1 - tip.x,
                 y: tip.y,
                 active: true,
-                pinch,
+                pinch: pinchDist < 0.06,
               };
             } else if (cursorRef.current.active) {
               cursorRef.current = { ...cursorRef.current, active: false, pinch: false };
