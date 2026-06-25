@@ -600,7 +600,7 @@ function DrawingStage({
       if (phase === "idle") {
         // Mouse drag is handled by Framer Motion drag below; the pointer loop
         // only drives the hand-gesture (pinch) flow.
-        if (p.source === "hand" && p.down && now > cooldownUntil) {
+        if (p.source === "hand" && p.down && now > cooldownUntil && !mouseDragRef.current) {
           const card = findCardAt(p.x, p.y);
           if (card) {
             phase = "pressing";
