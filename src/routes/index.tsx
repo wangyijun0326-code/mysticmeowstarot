@@ -535,6 +535,8 @@ function DrawingStage({
 
   const [pressId, setPressId] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<SessionDeckCard | null>(null);
+  // Singleton lock: id of the card currently dragged via mouse/touch (framer).
+  const [mouseDragId, setMouseDragId] = useState<string | null>(null);
 
   const railRef = useRef(railDeck);
   railRef.current = railDeck;
@@ -542,6 +544,10 @@ function DrawingStage({
   lockedRef.current = locked;
   const grabbedRef = useRef<SessionDeckCard | null>(null);
   grabbedRef.current = grabbed;
+  // True whenever ANY single card is being held (hand pinch OR mouse drag).
+  const mouseDragRef = useRef<string | null>(null);
+  mouseDragRef.current = mouseDragId;
+  const isHoldingCard = !!grabbed || !!mouseDragId;
 
   const PRESS_MS = 500;
   const DEBOUNCE_MS = 300;
@@ -553,14 +559,25 @@ function DrawingStage({
     let pressStart = 0;
     let cooldownUntil = 0;
 
+    // Hit-test under the cursor and return ONLY the single topmost card
+    // (highest z-index), so a pinch over overlapping cards grabs exactly one.
     const findCardAt = (x: number, y: number): SessionDeckCard | null => {
+      let best: SessionDeckCard | null = null;
+      let bestZ = -Infinity;
       for (const card of railRef.current) {
         const el = cardRefs.current.get(card.instanceId);
         if (!el) continue;
         const r = el.getBoundingClientRect();
-        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return card;
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          const z = Number.parseInt(getComputedStyle(el).zIndex, 10);
+          const zVal = Number.isFinite(z) ? z : 0;
+          if (zVal >= bestZ) {
+            bestZ = zVal;
+            best = card;
+          }
+        }
       }
-      return null;
+      return best;
     };
 
     const inSlotZone = (y: number): boolean => {
