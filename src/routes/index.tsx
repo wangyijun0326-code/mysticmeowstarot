@@ -339,13 +339,15 @@ type ScatterSpec = {
 
 function buildPile(): ScatterSpec[] {
   return Array.from({ length: PILE_SIZE }, (_, i) => {
-    const angle = (i / PILE_SIZE) * Math.PI * 2 + Math.random() * 0.6;
-    const radius = 14 + Math.random() * 30; // scatter distance
+    // Random direction + random centrifugal distance so each card flies out on
+    // its own vector (viewport-relative units = visible, real scatter).
+    const angle = (i / PILE_SIZE) * Math.PI * 2 + (Math.random() - 0.5) * 1.4;
+    const radius = 8 + Math.random() * 26; // in vmin → faster gesture = wider
     return {
       dx: Math.cos(angle) * radius,
-      dy: Math.sin(angle) * radius * 0.62,
-      baseRot: (Math.random() - 0.5) * 10,
-      spin: (Math.random() - 0.5) * 220,
+      dy: Math.sin(angle) * radius * 0.78,
+      baseRot: (Math.random() - 0.5) * 16,
+      spin: (Math.random() - 0.5) * 320,
     };
   });
 }
