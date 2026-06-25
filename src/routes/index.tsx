@@ -69,6 +69,11 @@ function Index() {
   const [deck, setDeck] = useState<SessionDeckCard[]>(() => createSessionDeck());
   const [drawnCards, setDrawnCards] = useState<DrawnCard[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Synchronous mirror of selectedIds. State updaters can run twice under React
+  // StrictMode; the previous code called setDrawnCards INSIDE the setSelectedIds
+  // updater, so one pick added two cards (the "选了一张却变两张 / 6/5" bug).
+  // A ref lets drawCard guard and commit exactly once per gesture.
+  const selectedRef = useRef<string[]>([]);
   const [reading, setReading] = useState<
     { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null
   >(null);
@@ -78,7 +83,11 @@ function Index() {
 
   const spread = spreadId ? SPREADS[spreadId] : null;
   const requiredCount = spread?.positions.length ?? 0;
-  const isDrawComplete = requiredCount > 0 && drawnCards.length === requiredCount;
+  // Use >= (not ===) so that even if an extra card slips in, the draw still
+  // completes and advances. The strict === check was the root cause of the
+  // "6/5 然后卡住不跳转" bug: one accidental double-pick pushed the count past
+  // the required number, and === never matched again.
+  const isDrawComplete = requiredCount > 0 && drawnCards.length >= requiredCount;
 
   const railDeck = useMemo(
     () => deck.filter((card) => !selectedIds.includes(card.instanceId)),
@@ -93,10 +102,14 @@ function Index() {
     if (gameState === "SHUFFLE") return assetUrl("wash.png");
     if (!spreadId) return null;
     const a = SPREAD_ASSETS[spreadId];
+    // DRAWING now renders the user's own design screenshot (one/three/five
+    // cards) as the base, with live interactive cards layered on top — instead
+    // of a separate custom layout that ignored the design.
+    if (gameState === "DRAWING") return assetUrl(a.draw);
     if (gameState === "SUCCESS") return assetUrl(a.success);
     if (gameState === "REVERSAL") return assetUrl(a.reversal);
     if (gameState === "END") return assetUrl(a.end);
-    return null; // DRAWING renders a live DOM layout, not a screenshot.
+    return null;
   }, [gameState, spreadId]);
 
   // ---- AI reading: requested once, when we enter the END phase ----
@@ -142,6 +155,7 @@ function Index() {
   const chooseSpread = (next: SpreadId) => {
     setSpreadId(next);
     setDeck(createSessionDeck());
+    selectedRef.current = [];
     setSelectedIds([]);
     setDrawnCards([]);
     setReading(null);
@@ -158,22 +172,25 @@ function Index() {
   const drawCard = useCallback(
     (card: SessionDeckCard) => {
       if (!spread) return;
-      setSelectedIds((prevSel) => {
-        if (prevSel.includes(card.instanceId)) return prevSel;
-        if (prevSel.length >= spread.positions.length) return prevSel;
-        const nextIndex = prevSel.length;
-        setDrawnCards((c) => [
-          ...c,
-          {
-            number: card.number,
-            name: card.name,
-            state: card.state,
-            position: spread.positions[nextIndex],
-            slotIndex: nextIndex,
-          },
-        ]);
-        return [...prevSel, card.instanceId];
-      });
+      const current = selectedRef.current;
+      // Idempotent + capped: a card is never added twice, and the count can
+      // never exceed the spread size — no matter how many times this fires.
+      if (current.includes(card.instanceId)) return;
+      if (current.length >= spread.positions.length) return;
+      const nextIndex = current.length;
+      const next = [...current, card.instanceId];
+      selectedRef.current = next;
+      setSelectedIds(next);
+      setDrawnCards((c) => [
+        ...c,
+        {
+          number: card.number,
+          name: card.name,
+          state: card.state,
+          position: spread.positions[nextIndex],
+          slotIndex: nextIndex,
+        },
+      ]);
     },
     [spread],
   );
@@ -181,6 +198,7 @@ function Index() {
   const resetAll = useCallback(() => {
     setSpreadId(null);
     setDeck(createSessionDeck());
+    selectedRef.current = [];
     setSelectedIds([]);
     setDrawnCards([]);
     setReading(null);
@@ -201,6 +219,7 @@ function Index() {
         case "DRAWING":
         case "SUCCESS":
         case "REVERSAL":
+          selectedRef.current = [];
           setSelectedIds([]);
           setDrawnCards([]);
           return "SHUFFLE";
@@ -338,96 +357,140 @@ function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
 
 /* -------------------------------------------------- SHUFFLE (physics pile) */
 
-const PILE_SIZE = 78;
+const PILE_SIZE = 30;
 
-type ScatterSpec = {
-  dx: number; // % of stage width
-  dy: number; // % of stage height
-  baseRot: number;
-  spin: number;
+type CardPhys = {
+  x: number;
+  y: number;
+  rot: number;
+  vx: number;
+  vy: number;
+  vr: number;
+  hx: number; // resting "neat pile" offset (px)
+  hy: number;
+  hrot: number;
 };
 
-function buildPile(): ScatterSpec[] {
-  return Array.from({ length: PILE_SIZE }, (_, i) => {
-    // Random direction + random centrifugal distance so each card flies out on
-    // its own vector (viewport-relative units = visible, real scatter).
-    const angle = (i / PILE_SIZE) * Math.PI * 2 + (Math.random() - 0.5) * 1.4;
-    const radius = 8 + Math.random() * 26; // in vmin → faster gesture = wider
-    return {
-      dx: Math.cos(angle) * radius,
-      dy: Math.sin(angle) * radius * 0.78,
-      baseRot: (Math.random() - 0.5) * 16,
-      spin: (Math.random() - 0.5) * 320,
-    };
+function makePhys(): CardPhys[] {
+  return Array.from({ length: PILE_SIZE }, () => {
+    const hx = (Math.random() - 0.5) * 16;
+    const hy = (Math.random() - 0.5) * 22;
+    const hrot = (Math.random() - 0.5) * 10;
+    return { x: hx, y: hy, rot: hrot, vx: 0, vy: 0, vr: 0, hx, hy, hrot };
   });
 }
 
 function ShuffleStage({ onDone }: { onDone: () => void }) {
-  const { pointerRef, status, enabled } = useGesture();
+  const { pointerRef } = useGesture();
   const [shuffling, setShuffling] = useState(false);
   const doneRef = useRef(false);
   const pileRef = useRef<HTMLDivElement | null>(null);
-  const pile = useMemo(buildPile, []);
-
-  // One shared energy value drives every card's centrifugal scatter spring.
-  const energy = useSpring(0, { stiffness: 90, damping: 15, mass: 0.7 });
+  // Plain-number physics state shared with each ShuffleCard by index.
+  const physRef = useRef<CardPhys[]>(makePhys());
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
     doneRef.current = true;
     setShuffling(true);
-    energy.set(1);
-    window.setTimeout(onDone, 1400);
-  }, [energy, onDone]);
+    // One last energetic scatter so proceeding feels earned.
+    for (const c of physRef.current) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = 120 + Math.random() * 220;
+      c.vx += Math.cos(ang) * r * 0.16;
+      c.vy += Math.sin(ang) * r * 0.16;
+      c.vr += (Math.random() - 0.5) * 60;
+    }
+    window.setTimeout(onDone, 1200);
+  }, [onDone]);
 
-  // Circular "wash" detection from the unified pointer (hand pinch-free OR mouse drag).
+  // Unified pointer (hand OR mouse) drives a real "hand-rub" scatter: cards
+  // near the pointer are dragged ALONG its motion (so they follow your hand),
+  // pushed outward (centrifugal "散开"), and tumble (spin). Circle ~3 turns to
+  // auto-complete, or tap the design's 完成洗牌 button.
   useEffect(() => {
     let raf = 0;
-    let energyVal = 0;
-    let totalAngle = 0;
+    let prevX = 0;
+    let prevY = 0;
     let prevAngle: number | null = null;
-    let lastX = 0;
-    let lastY = 0;
+    let totalAngle = 0;
+    let inited = false;
 
     const loop = () => {
       const p = pointerRef.current;
       const rect = pileRef.current?.getBoundingClientRect();
-      if (rect && !doneRef.current) {
+      const phys = physRef.current;
+      if (rect) {
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
-        const dx = p.x - cx;
-        const dy = p.y - cy;
-        const dist = Math.hypot(dx, dy);
-        const moved = Math.hypot(p.x - lastX, p.y - lastY) > 1.5;
-        lastX = p.x;
-        lastY = p.y;
-        // Hand: active hand over the pile. Mouse: button held over the pile.
+        const unit = rect.width; // pile width ≈ 12% of stage
+
+        if (!inited) {
+          prevX = p.x;
+          prevY = p.y;
+          inited = true;
+        }
+        const pvx = p.x - prevX;
+        const pvy = p.y - prevY;
+        prevX = p.x;
+        prevY = p.y;
+
+        const dxc = p.x - cx;
+        const dyc = p.y - cy;
+        const distToCenter = Math.hypot(dxc, dyc);
+        const speed = Math.hypot(pvx, pvy);
         const engaged =
-          dist < rect.width * 1.1 && moved && (p.handActive || p.down);
+          !doneRef.current &&
+          (p.handActive || p.down) &&
+          distToCenter < unit * 3.2 &&
+          speed > 0.6;
 
         if (engaged) {
-          const ang = Math.atan2(dy, dx);
+          const ang = Math.atan2(dyc, dxc);
           if (prevAngle !== null) {
             let d = ang - prevAngle;
             if (d > Math.PI) d -= 2 * Math.PI;
             if (d < -Math.PI) d += 2 * Math.PI;
             totalAngle += Math.abs(d);
-            energyVal = Math.min(1, energyVal + Math.abs(d) * 0.55);
           }
           prevAngle = ang;
         } else {
           prevAngle = null;
         }
-        energyVal *= 0.94;
-        energy.set(energyVal);
 
-        if (totalAngle > Math.PI * 4) finish();
+        for (const c of phys) {
+          if (engaged) {
+            const dx = cx + c.x - p.x;
+            const dy = cy + c.y - p.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const reach = unit * 2.2;
+            const influence = Math.max(0, 1 - dist / reach);
+            if (influence > 0) {
+              c.vx += pvx * influence * 0.9; // follow the hand
+              c.vy += pvy * influence * 0.9;
+              c.vx += (dx / dist) * influence * speed * 0.5; // push outward
+              c.vy += (dy / dist) * influence * speed * 0.5;
+              c.vr += (pvx * 0.12 + (Math.random() - 0.5) * 4) * influence; // tumble
+            }
+          }
+          const k = engaged ? 0.006 : 0.04; // spring back to the neat pile
+          c.vx += (c.hx - c.x) * k;
+          c.vy += (c.hy - c.y) * k;
+          c.vr += (c.hrot - c.rot) * (engaged ? 0.004 : 0.05);
+          c.vx *= 0.86;
+          c.vy *= 0.86;
+          c.vr *= 0.9;
+          c.x += c.vx;
+          c.y += c.vy;
+          c.rot += c.vr;
+        }
+
+        if (totalAngle > Math.PI * 6) finish();
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pointerRef, energy, finish]);
+  }, [pointerRef, finish]);
 
   return (
     <motion.div
@@ -437,8 +500,8 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       exit={{ opacity: 0 }}
     >
       <div className="sm-pile" ref={pileRef}>
-        {pile.map((spec, i) => (
-          <ShuffleCard key={i} energy={energy} spec={spec} index={i} />
+        {physRef.current.map((_, i) => (
+          <ShuffleCard key={i} phys={physRef} index={i} />
         ))}
         <AnimatePresence>
           {shuffling && (
@@ -452,71 +515,48 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
         </AnimatePresence>
       </div>
 
-      <div className="sm-shuffle-controls">
-        <p className="sm-status">{shuffleHint(enabled, status, shuffling)}</p>
-        <button type="button" className="sm-pill" onClick={finish} data-gesture>
-          完成洗牌
-        </button>
-      </div>
+      {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
+          no duplicate pill, no overlapping hint text. Fine-tune left/top/width/
+          height in preview so it lands exactly on the painted button. */}
+      <Hotspot label="完成洗牌" left="50%" top="92%" width="14%" height="7%" onClick={finish} />
     </motion.div>
   );
 }
 
 function ShuffleCard({
-  energy,
-  spec,
+  phys,
   index,
 }: {
-  energy: MotionValue<number>;
-  spec: ScatterSpec;
+  phys: { current: CardPhys[] };
   index: number;
 }) {
-  // Per-card spring physics layered on the shared energy value: when the
-  // gesture stops, each card eases back / settles with its own damping, giving
-  // an organic "real shuffle" feel instead of a rigid block.
-  const cfg = useMemo(
-    () => ({
-      stiffness: 70 + Math.random() * 90,
-      damping: 11 + Math.random() * 9,
-      mass: 0.5 + Math.random() * 0.5,
-    }),
-    [],
-  );
-  const tx = useTransform(energy, (e) => spec.dx * e);
-  const ty = useTransform(energy, (e) => spec.dy * e);
-  const trot = useTransform(energy, (e) => spec.baseRot + spec.spin * e);
-  const sx = useSpring(tx, cfg);
-  const sy = useSpring(ty, cfg);
-  const srot = useSpring(trot, cfg);
-  const x = useTransform(sx, (v) => `${v}vmin`);
-  const y = useTransform(sy, (v) => `${v}vmin`);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rot = useMotionValue(0);
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const c = phys.current?.[index];
+      if (c) {
+        x.set(c.x);
+        y.set(c.y);
+        rot.set(c.rot);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [phys, index, x, y, rot]);
+
   return (
     <motion.img
       src={BACK_SRC}
       alt=""
       draggable={false}
       className="sm-pile-card"
-      style={{ x, y, rotate: srot, zIndex: index }}
+      style={{ x, y, rotate: rot, zIndex: index }}
     />
   );
-}
-
-function shuffleHint(
-  enabled: boolean,
-  status: ReturnType<typeof useGesture>["status"],
-  shuffling: boolean,
-) {
-  if (shuffling) return "✦ 牌灵流动中……";
-  if (!enabled) return "在牌堆上方按住鼠标画圈搓牌，或点击「完成洗牌」";
-  switch (status) {
-    case "tracking":
-      return "把手放在牌堆上方画圈，离心力会让牌散开洗匀";
-    case "denied":
-    case "error":
-      return "摄像头不可用，可按住鼠标在牌堆上画圈搓牌";
-    default:
-      return "手势准备中，可先用鼠标在牌堆上画圈搓牌";
-  }
 }
 
 /* ----------------------------------- DRAWING (pinch · drag · release) */
@@ -539,226 +579,186 @@ function DrawingStage({
   const { pointerRef } = useGesture();
   const slots = SLOT_LAYOUTS[spreadId];
 
-  const stageRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
-  const floatRef = useRef<HTMLDivElement | null>(null);
-  // Wrapper that clips the carousel; the inner track drags horizontally within it.
   const poolWrapRef = useRef<HTMLDivElement | null>(null);
-
-  const [pressId, setPressId] = useState<string | null>(null);
-  const [grabbed, setGrabbed] = useState<SessionDeckCard | null>(null);
-  // Singleton lock: id of the card currently dragged via mouse/touch (framer).
-  const [mouseDragId, setMouseDragId] = useState<string | null>(null);
+  const poolRef = useRef<HTMLDivElement | null>(null);
+  // Single controlled offset for the carousel — driven by BOTH mouse drag
+  // (framer) and hand swipe, so the rail moves either way.
+  const poolX = useMotionValue(0);
 
   const railRef = useRef(railDeck);
   railRef.current = railDeck;
   const lockedRef = useRef(locked);
   lockedRef.current = locked;
-  const grabbedRef = useRef<SessionDeckCard | null>(null);
-  grabbedRef.current = grabbed;
-  // True whenever ANY single card is being held (hand pinch OR mouse drag).
-  const mouseDragRef = useRef<string | null>(null);
-  mouseDragRef.current = mouseDragId;
-  const isHoldingCard = !!grabbed || !!mouseDragId;
+  // Suppresses a tap that is really the tail of a carousel drag.
+  const draggingRef = useRef(false);
 
-  const PRESS_MS = 500;
-  const DEBOUNCE_MS = 300;
+  const minPoolX = useCallback(() => {
+    const track = poolRef.current;
+    const wrap = poolWrapRef.current;
+    if (!track || !wrap) return 0;
+    return Math.min(0, wrap.clientWidth - track.scrollWidth);
+  }, []);
 
-  useEffect(() => {
-    let raf = 0;
-    let phase: DragPhase = "idle";
-    let pressCardId: string | null = null;
-    let pressStart = 0;
-    let cooldownUntil = 0;
-
-    // Hit-test under the cursor and return ONLY the single topmost card
-    // (highest z-index), so a pinch over overlapping cards grabs exactly one.
-    const findCardAt = (x: number, y: number): SessionDeckCard | null => {
-      let best: SessionDeckCard | null = null;
-      let bestZ = -Infinity;
-      for (const card of railRef.current) {
-        const el = cardRefs.current.get(card.instanceId);
-        if (!el) continue;
-        const r = el.getBoundingClientRect();
-        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-          const z = Number.parseInt(getComputedStyle(el).zIndex, 10);
-          const zVal = Number.isFinite(z) ? z : 0;
-          if (zVal >= bestZ) {
-            bestZ = zVal;
-            best = card;
-          }
+  // Hit-test the topmost card under a point (so a pinch grabs exactly one).
+  const findCardAt = useCallback((x: number, y: number): SessionDeckCard | null => {
+    let best: SessionDeckCard | null = null;
+    let bestZ = -Infinity;
+    for (const card of railRef.current) {
+      const el = cardRefs.current.get(card.instanceId);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        const z = Number.parseInt(getComputedStyle(el).zIndex, 10);
+        const zVal = Number.isFinite(z) ? z : 0;
+        if (zVal >= bestZ) {
+          bestZ = zVal;
+          best = card;
         }
       }
-      return best;
-    };
+    }
+    return best;
+  }, []);
 
-    const inSlotZone = (y: number): boolean => {
-      const r = stageRef.current?.getBoundingClientRect();
-      if (!r) return false;
-      return y < r.top + r.height * 0.62; // upper area = slot drop target
-    };
+  // Hand loop: (1) open-hand horizontal move → browse the rail; (2) pinch over a
+  // card → choose it (one pinch = one card, with a cooldown). No long press, no
+  // drag-up: this matches the design's "swipe then tap to choose".
+  useEffect(() => {
+    let raf = 0;
+    let pinchPrev = false;
+    let cooldown = 0;
+    let lastSwipeX: number | null = null;
 
     const loop = () => {
       const p = pointerRef.current;
       const now = performance.now();
 
-      if (lockedRef.current) {
-        phase = "idle";
-        pressCardId = null;
-        raf = requestAnimationFrame(loop);
-        return;
-      }
-
-      if (phase === "idle") {
-        // Mouse drag is handled by Framer Motion drag below; the pointer loop
-        // only drives the hand-gesture (pinch) flow.
-        if (p.source === "hand" && p.down && now > cooldownUntil && !mouseDragRef.current) {
-          const card = findCardAt(p.x, p.y);
-          if (card) {
-            phase = "pressing";
-            pressCardId = card.instanceId;
-            pressStart = now;
-            setPressId(card.instanceId);
-          }
-        }
-      } else if (phase === "pressing") {
+      if (!lockedRef.current && p.handActive) {
         if (!p.down) {
-          phase = "idle";
-          pressCardId = null;
-          setPressId(null);
-          cooldownUntil = now + DEBOUNCE_MS;
-        } else if (now - pressStart > PRESS_MS) {
-          const card = railRef.current.find((c) => c.instanceId === pressCardId) ?? null;
-          if (card) {
-            phase = "dragging";
-            grabbedRef.current = card;
-            setGrabbed(card);
-            setPressId(null);
-          } else {
-            phase = "idle";
-            pressCardId = null;
-            setPressId(null);
+          // Browse: translate the rail by the hand's horizontal motion.
+          if (lastSwipeX !== null) {
+            const dx = p.x - lastSwipeX;
+            if (Math.abs(dx) > 0.5) {
+              const next = Math.max(minPoolX(), Math.min(0, poolX.get() + dx));
+              poolX.set(next);
+            }
           }
+          lastSwipeX = p.x;
+          pinchPrev = false;
+        } else {
+          // Choose: fire once on the pinch's rising edge over a card.
+          if (!pinchPrev && now > cooldown) {
+            const card = findCardAt(p.x, p.y);
+            if (card) {
+              onDraw(card);
+              cooldown = now + 450;
+            }
+          }
+          pinchPrev = true;
+          lastSwipeX = null;
         }
-      } else if (phase === "dragging") {
-        const fl = floatRef.current;
-        if (fl) fl.style.transform = `translate(${p.x}px, ${p.y}px)`;
-        if (!p.down) {
-          const card = grabbedRef.current;
-          const commit = inSlotZone(p.y);
-          phase = "idle";
-          pressCardId = null;
-          grabbedRef.current = null;
-          setGrabbed(null);
-          cooldownUntil = now + DEBOUNCE_MS;
-          if (card && commit) onDraw(card);
-        }
+      } else {
+        lastSwipeX = null;
+        pinchPrev = false;
       }
-
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pointerRef, onDraw]);
-
-  const spread = SPREADS[spreadId];
+  }, [pointerRef, onDraw, poolX, minPoolX, findCardAt]);
 
   return (
     <motion.div
       className="sm-layer sm-draw"
-      ref={stageRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* ---------- Top zone: spread slots (dashed empty placeholders) ---------- */}
-      <div className="sm-draw-top">
-        <div className="sm-slots">
-          {slots.map((_, index) => {
-            const card = drawnCards[index];
-            const isNext = index === drawnCards.length;
-            return (
-              <div key={index} className={cn("sm-slot2", isNext && !locked && "is-target")}>
-                {card ? (
-                  <motion.img
-                    src={BACK_SRC}
-                    alt="已抽取的牌背面"
-                    draggable={false}
-                    initial={{ opacity: 0, y: 80, scale: 0.6 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={spring}
-                  />
-                ) : (
-                  <span className="sm-slot2-label">{index + 1}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <p className="sm-status">
-          {locked
-            ? "牌阵已成，正在召唤……"
-            : `向上拖动卡牌放入空槽（捏合并上移亦可） · ${drawnCards.length}/${slots.length}`}
-        </p>
-      </div>
+      {/* Chosen cards animate into the design's own painted slots. Positions
+          come from SLOT_LAYOUTS (already tuned to the screenshots). Tune the
+          width / coordinates in preview if a card sits slightly off a slot. */}
+      {slots.map((slot, index) => {
+        const card = drawnCards[index];
+        if (!card) return null;
+        return (
+          <div
+            key={index}
+            style={{
+              position: "absolute",
+              left: slot.left,
+              top: slot.top,
+              width: "9%",
+              aspectRatio: "1086 / 1448",
+              transform: "translate(-50%, -50%)",
+              pointerEvents: "none",
+              zIndex: 6,
+            }}
+          >
+            <motion.img
+              src={BACK_SRC}
+              alt="已抽取的牌背面"
+              draggable={false}
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              initial={{ opacity: 0, y: 70, scale: 0.6 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={spring}
+            />
+          </div>
+        );
+      })}
 
-      {/* ---------- Bottom zone: drag-x carousel of the 78-card deck ---------- */}
+      {/* Bottom carousel — sits over the design's painted card strip. Mouse drag
+          (framer) and hand swipe both move it; tap / pinch a card to choose. */}
       {!locked && (
-        <div className="sm-pool-wrap" ref={poolWrapRef} aria-label={`${spread.title} 牌堆`}>
+        <div
+          className="sm-pool-wrap"
+          ref={poolWrapRef}
+          style={{ position: "absolute", left: 0, right: 0, bottom: "3%" }}
+          aria-label={`${SPREADS[spreadId].title} 牌堆`}
+        >
           <motion.div
             className="sm-pool"
+            ref={poolRef}
+            style={{ x: poolX }}
             drag="x"
             dragConstraints={poolWrapRef}
             dragElastic={0.06}
             dragMomentum
+            onDragStart={() => {
+              draggingRef.current = true;
+            }}
+            onDragEnd={() => {
+              // Let a tap that immediately follows a drag be ignored.
+              window.setTimeout(() => {
+                draggingRef.current = false;
+              }, 80);
+            }}
           >
-            {railDeck.map((card) => {
-              const isPressing = pressId === card.instanceId;
-              const isGrabbed = grabbed?.instanceId === card.instanceId;
-              // Singleton lock: while another card is held, this one cannot be
-              // grabbed and is visually muted.
-              const lockedOut = isHoldingCard && mouseDragId !== card.instanceId && !isGrabbed;
-              return (
-                <motion.div
-                  key={card.instanceId}
-                  ref={(el) => {
-                    if (el) cardRefs.current.set(card.instanceId, el);
-                    else cardRefs.current.delete(card.instanceId);
-                  }}
-                  className={cn(
-                    "sm-pool-card",
-                    isPressing && "is-selected",
-                    isGrabbed && "is-grabbed",
-                    lockedOut && "is-locked-out",
-                  )}
-                  data-gesture-ignore
-                  drag={lockedOut ? false : "y"}
-                  dragSnapToOrigin
-                  dragConstraints={{ top: -600, bottom: 0 }}
-                  dragElastic={0.25}
-                  whileDrag={{ scale: 1.14, zIndex: 60 }}
-                  onDragStart={() => setMouseDragId(card.instanceId)}
-                  onDragEnd={(_, info) => {
-                    setMouseDragId(null);
-                    // Drag-up past 50px → fly the card into the next empty slot.
-                    if (info.offset.y < -50) onDraw(card);
-                  }}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.6 }}
-                >
-                  <img src={BACK_SRC} alt="" draggable={false} />
-                </motion.div>
-              );
-            })}
+            {railDeck.map((card) => (
+              <motion.div
+                key={card.instanceId}
+                ref={(el) => {
+                  if (el) cardRefs.current.set(card.instanceId, el);
+                  else cardRefs.current.delete(card.instanceId);
+                }}
+                className="sm-pool-card"
+                data-gesture-ignore
+                whileHover={{ y: -10, scale: 1.06 }}
+                whileTap={{ scale: 1.12 }}
+                onTap={() => {
+                  if (draggingRef.current) return; // was a swipe, not a tap
+                  onDraw(card);
+                }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+              >
+                <img src={BACK_SRC} alt="" draggable={false} />
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       )}
-
-      {/* Floating card that follows the hand while pinch-dragging */}
-      <div ref={floatRef} className={cn("sm-drag-card", grabbed && "is-active")}>
-        {grabbed && <img src={BACK_SRC} alt="" draggable={false} />}
-      </div>
     </motion.div>
   );
 }
