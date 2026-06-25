@@ -339,13 +339,15 @@ type ScatterSpec = {
 
 function buildPile(): ScatterSpec[] {
   return Array.from({ length: PILE_SIZE }, (_, i) => {
-    const angle = (i / PILE_SIZE) * Math.PI * 2 + Math.random() * 0.6;
-    const radius = 14 + Math.random() * 30; // scatter distance
+    // Random direction + random centrifugal distance so each card flies out on
+    // its own vector (viewport-relative units = visible, real scatter).
+    const angle = (i / PILE_SIZE) * Math.PI * 2 + (Math.random() - 0.5) * 1.4;
+    const radius = 8 + Math.random() * 26; // in vmin → faster gesture = wider
     return {
       dx: Math.cos(angle) * radius,
-      dy: Math.sin(angle) * radius * 0.62,
-      baseRot: (Math.random() - 0.5) * 10,
-      spin: (Math.random() - 0.5) * 220,
+      dy: Math.sin(angle) * radius * 0.78,
+      baseRot: (Math.random() - 0.5) * 16,
+      spin: (Math.random() - 0.5) * 320,
     };
   });
 }
@@ -459,16 +461,32 @@ function ShuffleCard({
   spec: ScatterSpec;
   index: number;
 }) {
-  const x = useTransform(energy, (e) => `${spec.dx * e}%`);
-  const y = useTransform(energy, (e) => `${spec.dy * e}%`);
-  const rotate = useTransform(energy, (e) => spec.baseRot + spec.spin * e);
+  // Per-card spring physics layered on the shared energy value: when the
+  // gesture stops, each card eases back / settles with its own damping, giving
+  // an organic "real shuffle" feel instead of a rigid block.
+  const cfg = useMemo(
+    () => ({
+      stiffness: 70 + Math.random() * 90,
+      damping: 11 + Math.random() * 9,
+      mass: 0.5 + Math.random() * 0.5,
+    }),
+    [],
+  );
+  const tx = useTransform(energy, (e) => spec.dx * e);
+  const ty = useTransform(energy, (e) => spec.dy * e);
+  const trot = useTransform(energy, (e) => spec.baseRot + spec.spin * e);
+  const sx = useSpring(tx, cfg);
+  const sy = useSpring(ty, cfg);
+  const srot = useSpring(trot, cfg);
+  const x = useTransform(sx, (v) => `${v}vmin`);
+  const y = useTransform(sy, (v) => `${v}vmin`);
   return (
     <motion.img
       src={BACK_SRC}
       alt=""
       draggable={false}
       className="sm-pile-card"
-      style={{ x, y, rotate, zIndex: index }}
+      style={{ x, y, rotate: srot, zIndex: index }}
     />
   );
 }
@@ -517,6 +535,8 @@ function DrawingStage({
 
   const [pressId, setPressId] = useState<string | null>(null);
   const [grabbed, setGrabbed] = useState<SessionDeckCard | null>(null);
+  // Singleton lock: id of the card currently dragged via mouse/touch (framer).
+  const [mouseDragId, setMouseDragId] = useState<string | null>(null);
 
   const railRef = useRef(railDeck);
   railRef.current = railDeck;
@@ -524,6 +544,10 @@ function DrawingStage({
   lockedRef.current = locked;
   const grabbedRef = useRef<SessionDeckCard | null>(null);
   grabbedRef.current = grabbed;
+  // True whenever ANY single card is being held (hand pinch OR mouse drag).
+  const mouseDragRef = useRef<string | null>(null);
+  mouseDragRef.current = mouseDragId;
+  const isHoldingCard = !!grabbed || !!mouseDragId;
 
   const PRESS_MS = 500;
   const DEBOUNCE_MS = 300;
@@ -535,14 +559,25 @@ function DrawingStage({
     let pressStart = 0;
     let cooldownUntil = 0;
 
+    // Hit-test under the cursor and return ONLY the single topmost card
+    // (highest z-index), so a pinch over overlapping cards grabs exactly one.
     const findCardAt = (x: number, y: number): SessionDeckCard | null => {
+      let best: SessionDeckCard | null = null;
+      let bestZ = -Infinity;
       for (const card of railRef.current) {
         const el = cardRefs.current.get(card.instanceId);
         if (!el) continue;
         const r = el.getBoundingClientRect();
-        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return card;
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          const z = Number.parseInt(getComputedStyle(el).zIndex, 10);
+          const zVal = Number.isFinite(z) ? z : 0;
+          if (zVal >= bestZ) {
+            bestZ = zVal;
+            best = card;
+          }
+        }
       }
-      return null;
+      return best;
     };
 
     const inSlotZone = (y: number): boolean => {
@@ -565,7 +600,7 @@ function DrawingStage({
       if (phase === "idle") {
         // Mouse drag is handled by Framer Motion drag below; the pointer loop
         // only drives the hand-gesture (pinch) flow.
-        if (p.source === "hand" && p.down && now > cooldownUntil) {
+        if (p.source === "hand" && p.down && now > cooldownUntil && !mouseDragRef.current) {
           const card = findCardAt(p.x, p.y);
           if (card) {
             phase = "pressing";
@@ -662,6 +697,9 @@ function DrawingStage({
             {railDeck.map((card) => {
               const isPressing = pressId === card.instanceId;
               const isGrabbed = grabbed?.instanceId === card.instanceId;
+              // Singleton lock: while another card is held, this one cannot be
+              // grabbed and is visually muted.
+              const lockedOut = isHoldingCard && mouseDragId !== card.instanceId && !isGrabbed;
               return (
                 <motion.div
                   key={card.instanceId}
@@ -674,14 +712,17 @@ function DrawingStage({
                     "sm-pool-card",
                     isPressing && "is-selected",
                     isGrabbed && "is-grabbed",
+                    lockedOut && "is-locked-out",
                   )}
                   data-gesture-ignore
-                  drag="y"
+                  drag={lockedOut ? false : "y"}
                   dragSnapToOrigin
                   dragConstraints={{ top: -600, bottom: 0 }}
                   dragElastic={0.25}
                   whileDrag={{ scale: 1.14, zIndex: 60 }}
+                  onDragStart={() => setMouseDragId(card.instanceId)}
                   onDragEnd={(_, info) => {
+                    setMouseDragId(null);
                     if (info.offset.y < -90) onDraw(card);
                   }}
                   initial={{ opacity: 0, y: 30 }}
