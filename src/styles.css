@@ -222,21 +222,21 @@
 
 .sm-candle-glow {
   position: absolute;
-  width: 90px;
-  height: 90px;
+  width: 40px;
+  height: 48px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
-    circle at center,
-    color-mix(in oklab, #ffcf6e 85%, transparent) 0%,
-    color-mix(in oklab, #f0a73a 55%, transparent) 30%,
-    color-mix(in oklab, #c9821f 25%, transparent) 55%,
-    transparent 72%
+    ellipse at center,
+    color-mix(in oklab, #ffe1a0 90%, transparent) 0%,
+    color-mix(in oklab, #f0a73a 50%, transparent) 35%,
+    color-mix(in oklab, #c9821f 20%, transparent) 60%,
+    transparent 75%
   );
-  filter: blur(6px);
+  filter: blur(4px);
   box-shadow:
-    0 0 28px 12px color-mix(in oklab, #ffc24d 50%, transparent),
-    0 0 60px 26px color-mix(in oklab, #e89a2a 28%, transparent);
+    0 0 16px 5px color-mix(in oklab, #ffc24d 45%, transparent),
+    0 0 32px 12px color-mix(in oklab, #e89a2a 22%, transparent);
   mix-blend-mode: screen;
   will-change: opacity, transform;
   animation: smCandleFlicker 0.8s ease-in-out infinite alternate;
