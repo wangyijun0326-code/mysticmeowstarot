@@ -166,19 +166,9 @@ export function NavBar({ onHome }) {
   );
 }
 
-/* ====================== 示例:怎么拼起来(TanStack Router) ======================
-import { useNavigate } from "@tanstack/react-router";
-import bgThree from "@/assets/three_cards_reversal.png";
-import bgEnd   from "@/assets/end.png";
+// 示例(TanStack Router)用法见文件顶部说明:
+//   const navigate = useNavigate();
+//   <NavBar onHome={() => navigate({ to: "/" })} />
+//   <TarotReveal spread="three_reveal" background={bgThree} cards={drawn} />
+//   <ReadingPage background={bgEnd} text={reading} />
 
-export default function Demo(){
-  const navigate = useNavigate();
-  const drawn = ["/cards/the-sun.png","/cards/the-moon.png","/cards/the-star.png"];
-  const reading = "你抽到的三张牌讲述了……(AI 返回的长短不一文本)";
-  return (<>
-    <NavBar onHome={() => navigate({ to: "/" })}/>   {/* 点导航回第一页 */}
-    <TarotReveal spread="three_reveal" background={bgThree} cards={drawn}/>
-    {/* 揭示后跳转到结果页: <ReadingPage background={bgEnd} text={reading}/> */}
-  </>);
-}
-============================================================= */
