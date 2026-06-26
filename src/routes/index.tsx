@@ -724,6 +724,10 @@ function DrawingStage({
       {slots.map((slot, index) => {
         const card = drawnCards[index];
         if (!card) return null;
+        // Each spread's painted gold frame is a different size, so the drawn
+        // card width is tuned per spread to sit snugly inside its slot.
+        const slotWidth =
+          spreadId === "daily" ? "13%" : spreadId === "three" ? "11%" : "7.8%";
         return (
           <div
             key={index}
@@ -731,7 +735,7 @@ function DrawingStage({
               position: "absolute",
               left: slot.left,
               top: slot.top,
-              width: "9%",
+              width: slotWidth,
               aspectRatio: "1086 / 1448",
               transform: "translate(-50%, -50%)",
               pointerEvents: "none",
