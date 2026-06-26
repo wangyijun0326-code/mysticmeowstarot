@@ -667,6 +667,11 @@ function DrawingStage({
     return () => cancelAnimationFrame(raf);
   }, [pointerRef, onDraw, poolX, minPoolX, findCardAt]);
 
+  const poolConfig =
+    spreadId === "either"
+      ? { bottom: "10%", cardWidth: 84, gap: 10 }
+      : { bottom: "16.2%", cardWidth: 86, gap: 10 };
+
   return (
     <motion.div
       className="sm-layer sm-draw"
@@ -713,13 +718,17 @@ function DrawingStage({
         <div
           className="sm-pool-wrap"
           ref={poolWrapRef}
-          style={{ position: "absolute", left: 0, right: 0, bottom: "13%" }}
+          style={{ position: "absolute", left: 0, right: 0, bottom: poolConfig.bottom }}
           aria-label={`${SPREADS[spreadId].title} 牌堆`}
         >
           <motion.div
             className="sm-pool"
             ref={poolRef}
-            style={{ x: poolX }}
+            style={{
+              x: poolX,
+              ["--sm-pool-card-width" as string]: `${poolConfig.cardWidth}px`,
+              ["--sm-pool-gap" as string]: `${poolConfig.gap}px`,
+            }}
             drag="x"
             dragConstraints={poolWrapRef}
             dragElastic={0.06}
@@ -1023,6 +1032,8 @@ function Hotspot({
   onClick,
   round,
   muted,
+  className,
+  rotate,
 }: {
   label: string;
   left: string;
@@ -1032,12 +1043,22 @@ function Hotspot({
   onClick: () => void;
   round?: boolean;
   muted?: boolean;
+  className?: string;
+  rotate?: string;
 }) {
+  const style = {
+    left,
+    top,
+    width,
+    height,
+    "--sm-rotate": rotate ?? "0deg",
+  } as CSSProperties;
+
   return (
     <button
       type="button"
-      className={cn("sm-hotspot", round && "is-round", muted && "is-muted")}
-      style={{ left, top, width, height }}
+      className={cn("sm-hotspot", round && "is-round", muted && "is-muted", className)}
+      style={style}
       onClick={onClick}
       aria-label={label}
     />
