@@ -636,17 +636,27 @@
 
 .sm-end-panel {
   position: absolute;
-  inset: 0;
+  /* Clip the scroll region to the INNER frame of end.png: start below the
+     nav bar, end above the bottom gold border, and stay inside the side
+     borders. Content now scrolls within this box and never crosses the nav
+     bar or the decorative frame. */
+  top: 15%;
+  bottom: 6.5%;
+  left: 8%;
+  right: 8%;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
   display: flex;
   flex-direction: column;
-  gap: clamp(1.2rem, 3vw, 2.2rem);
-  /* Sit INSIDE the end.png frame (below the nav bar, within the gold border)
-     instead of covering the whole design with a dark sheet. */
-  padding: 13vh clamp(3.5rem, 8vw, 7rem) 8vh;
+  gap: clamp(1rem, 2.4vw, 1.8rem);
+  padding: clamp(0.5rem, 1.5vw, 1.2rem) clamp(0.5rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
   background: transparent;
+  /* Soft fade at the top/bottom edges so text dissolves at the frame
+     instead of hard-cutting against the nav bar / border. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 4%, #000 95%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 4%, #000 95%, transparent 100%);
 }
 
 .sm-end-panel::-webkit-scrollbar {
