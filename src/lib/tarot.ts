@@ -150,6 +150,24 @@ export const SLOT_LAYOUTS: Record<SpreadId, Array<{ left: string; top: string }>
   ],
 };
 
+// Separate reversal-stage slot alignment. The reversal screenshots have their
+// own painted gold frames, so they cannot reuse the drawing-stage positions.
+export const REVERSAL_SLOT_LAYOUTS: Record<SpreadId, Array<{ left: string; top: string }>> = {
+  daily: [{ left: "50%", top: "51.2%" }],
+  three: [
+    { left: "32.3%", top: "47.3%" },
+    { left: "50.1%", top: "47.3%" },
+    { left: "68%", top: "47.3%" },
+  ],
+  either: [
+    { left: "31.6%", top: "30.1%" },
+    { left: "32.3%", top: "56%" },
+    { left: "50%", top: "66.2%" },
+    { left: "67.8%", top: "56%" },
+    { left: "68.5%", top: "30.1%" },
+  ],
+};
+
 // Maps each spread to its design-screenshot filenames living in /public/assets.
 // These drive the application state machine: every state renders the matching
 // screenshot as an <img> base layer (never a CSS background).

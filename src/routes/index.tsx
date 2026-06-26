@@ -12,6 +12,7 @@ import { ChevronLeft, RotateCcw } from "lucide-react";
 import {
   SPREADS,
   SPREAD_ASSETS,
+  REVERSAL_SLOT_LAYOUTS,
   createSessionDeck,
   getCardFrontPath,
   type DrawnCard,
@@ -833,6 +834,11 @@ function ReversalStage({
   const [flipped, setFlipped] = useState(false);
   const flippedRef = useRef(false);
 
+  const spreadId =
+    drawnCards.length === 1 ? "daily" : drawnCards.length === 3 ? "three" : ("either" as SpreadId);
+  const reversalSlots = REVERSAL_SLOT_LAYOUTS[spreadId];
+  const reversalCardWidth = spreadId === "daily" ? 12.2 : spreadId === "three" ? 11 : 8.4;
+
   const trigger = useCallback(() => {
     if (flippedRef.current) return;
     flippedRef.current = true;
@@ -870,34 +876,40 @@ function ReversalStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Full-stage 3D flip surface */}
       <div className="sm-flip-scene">
-        <motion.div
-          className="sm-flip-card"
-          animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div className="sm-flip-face sm-flip-front">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img key={card.position} src={BACK_SRC} alt="" draggable={false} />
-              ))}
+        {drawnCards.map((card, index) => {
+          const slot = reversalSlots[index];
+          if (!slot) return null;
+          return (
+            <div
+              key={card.position}
+              className="sm-reversal-slot"
+              style={{
+                left: `${slot.left}%`,
+                top: `${slot.top}%`,
+                width: `${reversalCardWidth}%`,
+              }}
+            >
+              <motion.div
+                className="sm-flip-card"
+                animate={{ rotateY: flipped ? 180 : 0 }}
+                transition={{ duration: 1, ease: [0.4, 0, 0.2, 1], delay: index * 0.04 }}
+              >
+                <div className="sm-flip-face sm-flip-front">
+                  <img src={BACK_SRC} alt="" draggable={false} className="sm-reversal-card-image" />
+                </div>
+                <div className="sm-flip-face sm-flip-back">
+                  <img
+                    src={getCardFrontPath(card.number)}
+                    alt={`${card.name}${card.state}`}
+                    className={cn("sm-reversal-card-image", card.state === "逆位" && "is-reversed")}
+                    draggable={false}
+                  />
+                </div>
+              </motion.div>
             </div>
-          </div>
-          <div className="sm-flip-face sm-flip-back">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img
-                  key={card.position}
-                  src={getCardFrontPath(card.number)}
-                  alt={`${card.name}${card.state}`}
-                  className={cn(card.state === "逆位" && "is-reversed")}
-                  draggable={false}
-                />
-              ))}
-            </div>
-          </div>
-        </motion.div>
+          );
+        })}
       </div>
 
       {!flipped && (
