@@ -12,7 +12,6 @@ import { ChevronLeft, RotateCcw } from "lucide-react";
 import {
   SPREADS,
   SPREAD_ASSETS,
-  SLOT_LAYOUTS,
   createSessionDeck,
   getCardFrontPath,
   type DrawnCard,
@@ -20,6 +19,8 @@ import {
 } from "@/lib/tarot";
 import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
+import { useSlotLayout } from "@/lib/slot-layout";
+import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -616,7 +617,9 @@ function DrawingStage({
   locked: boolean;
 }) {
   const { pointerRef } = useGesture();
-  const slots = SLOT_LAYOUTS[spreadId];
+  const layout = useSlotLayout();
+  const spreadLayout = layout[spreadId];
+  const slots = spreadLayout.slots;
 
   const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const poolWrapRef = useRef<HTMLDivElement | null>(null);
@@ -724,18 +727,17 @@ function DrawingStage({
       {slots.map((slot, index) => {
         const card = drawnCards[index];
         if (!card) return null;
-        // Each spread's painted gold frame is a different size, so the drawn
-        // card width is tuned per spread to sit snugly inside its slot.
-        const slotWidth =
-          spreadId === "daily" ? "13%" : spreadId === "three" ? "11%" : "7.8%";
+        // Drawn-card width and slot positions come from the live layout store
+        // (tunable via the ⚙ 布局调试 panel) so each spread can be matched to
+        // its painted gold frame precisely.
         return (
           <div
             key={index}
             style={{
               position: "absolute",
-              left: slot.left,
-              top: slot.top,
-              width: slotWidth,
+              left: `${slot.left}%`,
+              top: `${slot.top}%`,
+              width: `${spreadLayout.cardWidth}%`,
               aspectRatio: "1086 / 1448",
               transform: "translate(-50%, -50%)",
               pointerEvents: "none",
@@ -754,6 +756,7 @@ function DrawingStage({
           </div>
         );
       })}
+
 
       {/* Bottom carousel — sits over the design's painted card strip. Mouse drag
           (framer) and hand swipe both move it; tap / pinch a card to choose. */}
@@ -811,6 +814,8 @@ function DrawingStage({
           </motion.div>
         </div>
       )}
+
+      <SlotLayoutDebugger spreadId={spreadId} />
     </motion.div>
   );
 }
