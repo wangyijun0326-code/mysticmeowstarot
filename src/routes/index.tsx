@@ -20,7 +20,22 @@ import {
 } from "@/lib/tarot";
 import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
+import { TarotReveal, ReadingPage, NavBar } from "@/components/TarotApp";
 import { cn } from "@/lib/utils";
+
+// Maps each spread to the TarotApp reveal-page QUAD key (real card faces are
+// pasted into the glowing slots of the *_reversal background screenshot).
+const REVEAL_SPREAD: Record<SpreadId, string> = {
+  daily: "daily_reveal",
+  three: "three_reveal",
+  either: "five_reveal",
+};
+// QUAD slot order → drawnCard.slotIndex, so each face lands in the right slot.
+const REVEAL_SLOT_ORDER: Record<SpreadId, number[]> = {
+  daily: [0],
+  three: [0, 1, 2],
+  either: [2, 4, 1, 3, 0],
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
