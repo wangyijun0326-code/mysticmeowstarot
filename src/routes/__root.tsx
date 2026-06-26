@@ -158,6 +158,7 @@ function RootComponent() {
       {mounted ? (
         <GestureProvider>
           <Outlet />
+          <BgmPlayer />
         </GestureProvider>
       ) : (
         <Outlet />
