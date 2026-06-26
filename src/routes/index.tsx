@@ -306,29 +306,64 @@ function GlobalBackButton({ onBack, label }: { onBack: () => void; label: string
 
 function HeaderHomeHotspots({ onHome }: { onHome: () => void }) {
   const items = [
-    { label: "HOME", left: "19.1%", width: "8.2%" },
-    { label: "ABOUT", left: "31.2%", width: "8.2%" },
-    { label: "HISTORY", left: "67.8%", width: "9.2%" },
-    { label: "CONTACT", left: "82.8%", width: "9.2%" },
+    { label: "HOME", left: "14.8%", width: "9.2%" },
+    { label: "ABOUT", left: "26.5%", width: "9.2%" },
+    { label: "HISTORY", left: "63.2%", width: "10.0%" },
+    { label: "CONTACT", left: "77.0%", width: "10.0%" },
   ] as const;
 
   return (
     <div className="sm-layer sm-nav-hotspots">
       {items.map((item) => (
-        <Hotspot
+        <HeaderNavButton
           key={item.label}
-          label={`${item.label} 返回首页`}
+          label={item.label}
           left={item.left}
-          top="5.4%"
+          top="5.2%"
           width={item.width}
-          height="7.2%"
-          className="is-nav-link"
+          height="7.5%"
           onClick={onHome}
         />
       ))}
     </div>
   );
 }
+
+function HeaderNavButton({
+  label,
+  left,
+  top,
+  width,
+  height,
+  onClick,
+}: {
+  label: string;
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  onClick: () => void;
+}) {
+  const style = {
+    left,
+    top,
+    width,
+    height,
+  } as CSSProperties;
+
+  return (
+    <button
+      type="button"
+      className="sm-nav-button"
+      style={style}
+      onClick={onClick}
+      aria-label={`${label} 返回首页`}
+    >
+      <span className="sm-nav-button__label">{label}</span>
+    </button>
+  );
+}
+
 
 /* ------------------------------------------------------------------ MENU */
 
