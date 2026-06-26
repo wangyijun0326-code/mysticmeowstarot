@@ -214,6 +214,60 @@
   inset: 0;
 }
 
+/* ---- Flickering candle-flame halo --------------------------------------- */
+.sm-candle-glow-layer {
+  pointer-events: none;
+  z-index: 3;
+}
+
+.sm-candle-glow {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in oklab, #ffcf6e 85%, transparent) 0%,
+    color-mix(in oklab, #f0a73a 55%, transparent) 30%,
+    color-mix(in oklab, #c9821f 25%, transparent) 55%,
+    transparent 72%
+  );
+  filter: blur(6px);
+  box-shadow:
+    0 0 28px 12px color-mix(in oklab, #ffc24d 50%, transparent),
+    0 0 60px 26px color-mix(in oklab, #e89a2a 28%, transparent);
+  mix-blend-mode: screen;
+  will-change: opacity, transform;
+  animation: smCandleFlicker 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes smCandleFlicker {
+  0% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  35% {
+    opacity: 0.62;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+  60% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.98);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-candle-glow {
+    animation: none;
+    opacity: 0.65;
+  }
+}
+
 /* Transparent, absolutely positioned clickable hotspots over the screenshot. */
 .sm-hotspot {
   position: absolute;
