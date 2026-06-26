@@ -12,6 +12,7 @@ import { ChevronLeft, RotateCcw } from "lucide-react";
 import {
   SPREADS,
   SPREAD_ASSETS,
+  REVERSAL_SLOT_LAYOUTS,
   createSessionDeck,
   getCardFrontPath,
   type DrawnCard,
