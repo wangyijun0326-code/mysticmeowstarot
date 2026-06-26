@@ -258,6 +258,8 @@ function Index() {
         <HeaderHomeHotspots onHome={resetAll} />
 
         <CandleGlow gameState={gameState} />
+        <CandleGlowDebugger gameState={gameState} />
+
 
         <AnimatePresence>
           {gameState === "MENU" && (
