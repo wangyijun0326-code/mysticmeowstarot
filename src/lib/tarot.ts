@@ -135,18 +135,18 @@ export const SPREADS: Record<SpreadId, SpreadDefinition> = {
 // Slot positions are tuned to overlay precisely on the design screenshots
 // (1672 x 941). Values are percentages of the stage frame.
 export const SLOT_LAYOUTS: Record<SpreadId, Array<{ left: string; top: string }>> = {
-  daily: [{ left: "50%", top: "40%" }],
+  daily: [{ left: "49.9%", top: "40.2%" }],
   three: [
-    { left: "33.5%", top: "41%" }, // PAST
-    { left: "50%", top: "41%" }, // PRESENT
-    { left: "66.5%", top: "41%" }, // FUTURE
+    { left: "32.8%", top: "39.5%" }, // PAST
+    { left: "50%", top: "39.5%" }, // PRESENT
+    { left: "67.4%", top: "39.5%" }, // FUTURE
   ],
   either: [
-    { left: "50%", top: "55.5%" }, // 1 现状
-    { left: "32.7%", top: "54%" }, // 2 路径 A
-    { left: "30.5%", top: "30.5%" }, // 3 A 的结果
-    { left: "65.5%", top: "54%" }, // 4 路径 B
-    { left: "68.5%", top: "30.5%" }, // 5 B 的结果
+    { left: "49.9%", top: "56.2%" }, // 1 现状
+    { left: "33%", top: "54.7%" }, // 2 路径 A
+    { left: "30.1%", top: "30.9%" }, // 3 A 的结果
+    { left: "66.7%", top: "54.7%" }, // 4 路径 B
+    { left: "69.9%", top: "30.9%" }, // 5 B 的结果
   ],
 };
 
