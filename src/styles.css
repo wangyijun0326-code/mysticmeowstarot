@@ -268,7 +268,65 @@
   }
 }
 
-/* Transparent, absolutely positioned clickable hotspots over the screenshot. */
+/* ---- Card flight: golden trail canvas + slot landing glow --------------- */
+.sm-flight-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sm-slot-frame {
+  border-radius: 9px;
+}
+
+/* Target slot breathes a warm gold halo while a card is in flight toward it. */
+.sm-slot-frame.is-arming {
+  animation: smSlotBreath 1s ease-in-out infinite alternate;
+}
+
+@keyframes smSlotBreath {
+  from {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, #ffcd6e 35%, transparent),
+      0 0 12px 3px color-mix(in oklab, #ffc24d 30%, transparent);
+  }
+  to {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, #ffe1a0 80%, transparent),
+      0 0 26px 9px color-mix(in oklab, #ffc24d 60%, transparent);
+  }
+}
+
+/* The instant the card lands: a quick shake + golden flash. */
+.sm-slot-frame.is-flash {
+  animation: smSlotLand 0.55s ease-out;
+}
+
+@keyframes smSlotLand {
+  0% {
+    transform: translate(-50%, -50%) scale(1.06);
+    box-shadow: 0 0 34px 14px color-mix(in oklab, #ffe7a0 85%, transparent);
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(0.985);
+    box-shadow: 0 0 20px 8px color-mix(in oklab, #ffc24d 55%, transparent);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, #ffe7a0 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-slot-frame.is-arming,
+  .sm-slot-frame.is-flash {
+    animation: none;
+  }
+}
+
+
 .sm-hotspot {
   position: absolute;
   transform: translate(-50%, -50%) rotate(var(--sm-rotate, 0deg));
