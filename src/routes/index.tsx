@@ -618,7 +618,9 @@ function DrawingStage({
   locked: boolean;
 }) {
   const { pointerRef } = useGesture();
-  const slots = SLOT_LAYOUTS[spreadId];
+  const layout = useSlotLayout();
+  const spreadLayout = layout[spreadId];
+  const slots = spreadLayout.slots;
 
   const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const poolWrapRef = useRef<HTMLDivElement | null>(null);
