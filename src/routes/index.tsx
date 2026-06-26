@@ -860,6 +860,38 @@ function ReversalStage({
 
 /* --------------------------------------------------------- END (reading) */
 
+function Typewriter({
+  text,
+  speed = 26,
+  startDelay = 0,
+}: {
+  text: string;
+  speed?: number;
+  startDelay?: number;
+}) {
+  const [shown, setShown] = useState("");
+
+  useEffect(() => {
+    setShown("");
+    if (!text) return;
+    let i = 0;
+    let interval = 0;
+    const start = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        i += 1;
+        setShown(text.slice(0, i));
+        if (i >= text.length) window.clearInterval(interval);
+      }, speed);
+    }, startDelay);
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(interval);
+    };
+  }, [text, speed, startDelay]);
+
+  return <>{shown}</>;
+}
+
 function EndStage({
   spread,
   drawnCards,
@@ -947,15 +979,29 @@ function EndStage({
         <div className="sm-reading">
           <p className="sm-reading-kicker">AI 中性深度解读</p>
           <p className="sm-reading-summary">
-            {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
+            {isLoading ? (
+              "正在召唤解读……"
+            ) : error ? (
+              error
+            ) : (
+              <Typewriter text={reading?.summary ?? ""} speed={24} />
+            )}
           </p>
           <div className="sm-reading-grid">
-            {drawnCards.map((card) => {
+            {drawnCards.map((card, index) => {
               const item = reading?.perCard.find((entry) => entry.position === card.position);
               return (
                 <article key={card.position} className="sm-reading-item">
                   <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
-                  <p>{item?.text ?? (isLoading ? "" : "—")}</p>
+                  <p>
+                    {item?.text ? (
+                      <Typewriter text={item.text} speed={30} startDelay={400 + index * 220} />
+                    ) : isLoading ? (
+                      ""
+                    ) : (
+                      "—"
+                    )}
+                  </p>
                 </article>
               );
             })}
