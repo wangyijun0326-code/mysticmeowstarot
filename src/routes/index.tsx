@@ -306,7 +306,7 @@ function Index() {
 function CandleGlow({ gameState }: { gameState: GameState }) {
   // [x%, y%] of the candle flame within each background screenshot.
   const positions: Partial<Record<GameState, { x: number; y: number }[]>> = {
-    MENU: [{ x: 11, y: 41 }],
+    MENU: [{ x: 12, y: 36 }],
     SPREAD_SELECTION: [{ x: 8, y: 13 }],
     SHUFFLE: [{ x: 90, y: 31 }],
     DRAWING: [{ x: 7, y: 21 }],
