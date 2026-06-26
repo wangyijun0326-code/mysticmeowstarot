@@ -781,8 +781,8 @@
 }
 
 .sm-reading-item {
-  background: var(--secondary);
-  border: 1px solid var(--border);
+  background: oklch(0.06 0.02 300 / 38%);
+  border: 1px solid color-mix(in oklab, var(--gold) 16%, transparent);
   border-radius: 12px;
   padding: 1rem;
 }
