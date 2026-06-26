@@ -728,18 +728,17 @@ function DrawingStage({
       {slots.map((slot, index) => {
         const card = drawnCards[index];
         if (!card) return null;
-        // Each spread's painted gold frame is a different size, so the drawn
-        // card width is tuned per spread to sit snugly inside its slot.
-        const slotWidth =
-          spreadId === "daily" ? "13%" : spreadId === "three" ? "11%" : "7.8%";
+        // Drawn-card width and slot positions come from the live layout store
+        // (tunable via the ⚙ 布局调试 panel) so each spread can be matched to
+        // its painted gold frame precisely.
         return (
           <div
             key={index}
             style={{
               position: "absolute",
-              left: slot.left,
-              top: slot.top,
-              width: slotWidth,
+              left: `${slot.left}%`,
+              top: `${slot.top}%`,
+              width: `${spreadLayout.cardWidth}%`,
               aspectRatio: "1086 / 1448",
               transform: "translate(-50%, -50%)",
               pointerEvents: "none",
@@ -758,6 +757,7 @@ function DrawingStage({
           </div>
         );
       })}
+
 
       {/* Bottom carousel — sits over the design's painted card strip. Mouse drag
           (framer) and hand swipe both move it; tap / pinch a card to choose. */}
