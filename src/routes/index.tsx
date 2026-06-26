@@ -20,7 +20,22 @@ import {
 } from "@/lib/tarot";
 import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
+import { TarotReveal, ReadingPage, NavBar } from "@/components/TarotApp";
 import { cn } from "@/lib/utils";
+
+// Maps each spread to the TarotApp reveal-page QUAD key (real card faces are
+// pasted into the glowing slots of the *_reversal background screenshot).
+const REVEAL_SPREAD: Record<SpreadId, string> = {
+  daily: "daily_reveal",
+  three: "three_reveal",
+  either: "five_reveal",
+};
+// QUAD slot order → drawnCard.slotIndex, so each face lands in the right slot.
+const REVEAL_SLOT_ORDER: Record<SpreadId, number[]> = {
+  daily: [0],
+  three: [0, 1, 2],
+  either: [2, 4, 1, 3, 0],
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -107,8 +122,8 @@ function Index() {
     // of a separate custom layout that ignored the design.
     if (gameState === "DRAWING") return assetUrl(a.draw);
     if (gameState === "SUCCESS") return assetUrl(a.success);
-    if (gameState === "REVERSAL") return assetUrl(a.reversal);
-    if (gameState === "END") return assetUrl(a.end);
+    // REVERSAL (揭示页) and END (结果页) render their own full backgrounds
+    // through TarotApp's <TarotReveal /> and <ReadingPage />.
     return null;
   }, [gameState, spreadId]);
 
@@ -271,11 +286,18 @@ function Index() {
             />
           )}
           {gameState === "REVERSAL" && spreadId && (
-            <ReversalStage key="reversal" drawnCards={drawnCards} onRevealed={goToEnd} />
+            <ReversalStage
+              key="reversal"
+              spreadId={spreadId}
+              drawnCards={drawnCards}
+              onRevealed={goToEnd}
+              onHome={resetAll}
+            />
           )}
           {gameState === "END" && spread && spreadId && (
             <EndStage
               key="end"
+              spreadId={spreadId}
               spread={spread}
               drawnCards={drawnCards}
               reading={reading}
@@ -766,21 +788,23 @@ function DrawingStage({
 /* ------------------------------------------------ REVERSAL (swipe to flip) */
 
 function ReversalStage({
+  spreadId,
   drawnCards,
   onRevealed,
+  onHome,
 }: {
+  spreadId: SpreadId;
   drawnCards: DrawnCard[];
   onRevealed: () => void;
+  onHome: () => void;
 }) {
   const { pointerRef } = useGesture();
-  const [flipped, setFlipped] = useState(false);
-  const flippedRef = useRef(false);
+  const revealedRef = useRef(false);
 
   const trigger = useCallback(() => {
-    if (flippedRef.current) return;
-    flippedRef.current = true;
-    setFlipped(true);
-    window.setTimeout(onRevealed, 1100);
+    if (revealedRef.current) return;
+    revealedRef.current = true;
+    window.setTimeout(onRevealed, 700);
   }, [onRevealed]);
 
   // Swipe-right detection (hand): track left→right horizontal travel.
@@ -793,7 +817,7 @@ function ReversalStage({
       if (p.handActive) {
         buf.push({ x: p.x, t: now });
         while (buf.length && now - buf[0].t > 500) buf.shift();
-        if (buf.length > 3 && !flippedRef.current) {
+        if (buf.length > 3 && !revealedRef.current) {
           const dx = buf[buf.length - 1].x - buf[0].x;
           if (dx > window.innerWidth * 0.22) trigger();
         }
@@ -806,6 +830,14 @@ function ReversalStage({
     return () => cancelAnimationFrame(raf);
   }, [pointerRef, trigger]);
 
+  // Real card faces pasted (perspective) into the glowing slots of the
+  // *_reversal screenshot, ordered to match the QUAD slots in TarotApp.
+  const revealBg = assetUrl(SPREAD_ASSETS[spreadId].reversal);
+  const cards = REVEAL_SLOT_ORDER[spreadId].map((slot) => {
+    const card = drawnCards.find((c) => c.slotIndex === slot);
+    return card ? getCardFrontPath(card.number) : "";
+  });
+
   return (
     <motion.div
       className="sm-layer sm-reversal"
@@ -813,54 +845,27 @@ function ReversalStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Full-stage 3D flip surface */}
-      <div className="sm-flip-scene">
-        <motion.div
-          className="sm-flip-card"
-          animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div className="sm-flip-face sm-flip-front">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img key={card.position} src={BACK_SRC} alt="" draggable={false} />
-              ))}
-            </div>
-          </div>
-          <div className="sm-flip-face sm-flip-back">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img
-                  key={card.position}
-                  src={getCardFrontPath(card.number)}
-                  alt={`${card.name}${card.state}`}
-                  className={cn(card.state === "逆位" && "is-reversed")}
-                  draggable={false}
-                />
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
+      <NavBar onHome={onHome} />
+      <TarotReveal spread={REVEAL_SPREAD[spreadId]} background={revealBg} cards={cards} />
 
-      {!flipped && (
-        <button type="button" className="sm-swipe-hit" onClick={trigger} data-gesture aria-label="向右滑动揭晓">
-          <motion.span
-            className="sm-reveal-hint"
-            animate={{ opacity: [0.5, 1, 0.5], x: [0, 14, 0] }}
-            transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
-          >
-            向右滑动揭晓 →
-          </motion.span>
-        </button>
-      )}
+      <button type="button" className="sm-swipe-hit" onClick={trigger} data-gesture aria-label="查看解读">
+        <motion.span
+          className="sm-reveal-hint"
+          animate={{ opacity: [0.5, 1, 0.5], x: [0, 14, 0] }}
+          transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
+        >
+          向右滑动查看解读 →
+        </motion.span>
+      </button>
     </motion.div>
   );
 }
 
+
 /* --------------------------------------------------------- END (reading) */
 
 function EndStage({
+  spreadId,
   spread,
   drawnCards,
   reading,
@@ -868,6 +873,7 @@ function EndStage({
   error,
   onReset,
 }: {
+  spreadId: SpreadId;
   spread: (typeof SPREADS)[SpreadId];
   drawnCards: DrawnCard[];
   reading:
@@ -877,30 +883,28 @@ function EndStage({
   error: string | null;
   onReset: () => void;
 }) {
-  const { pointerRef } = useGesture();
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Compose the AI reading into a single scrollable text block for ReadingPage.
+  const readingText = isLoading
+    ? "正在召唤解读……"
+    : error
+      ? error
+      : reading
+        ? [
+            spread.interpretationTitle,
+            "",
+            reading.summary,
+            "",
+            ...reading.perCard.flatMap((entry) => [
+              `【${entry.title}】`,
+              entry.text,
+              "",
+            ]),
+          ]
+            .join("\n")
+            .trim()
+        : "";
 
-  // Hand vertical pan → smooth scroll the reading panel (no click-to-page).
-  useEffect(() => {
-    let raf = 0;
-    let lastY: number | null = null;
-    const loop = () => {
-      const p = pointerRef.current;
-      const el = scrollRef.current;
-      if (el && p.handActive && !p.down) {
-        if (lastY !== null) {
-          const dy = p.y - lastY;
-          if (Math.abs(dy) > 1) el.scrollBy({ top: dy * 2.4 });
-        }
-        lastY = p.y;
-      } else {
-        lastY = null;
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [pointerRef]);
+  const endBg = assetUrl(SPREAD_ASSETS[spreadId].end);
 
   return (
     <motion.div
@@ -909,62 +913,12 @@ function EndStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="sm-end-panel" ref={scrollRef}>
-        <header className="sm-result-head">
-          <p className="sm-kicker">{spread.title}</p>
-          <h1>{spread.interpretationTitle}</h1>
-          <p className="sm-sub">{spread.subtitle}</p>
-          <button type="button" className="sm-pill" onClick={onReset} data-gesture>
-            <RotateCcw className="size-4" /> 重新占卜
-          </button>
-        </header>
-
-        <div className="sm-card-row">
-          {drawnCards.map((card, index) => (
-            <motion.figure
-              key={card.position}
-              className="sm-result-card"
-              initial={{ rotateY: 90, opacity: 0 }}
-              animate={{ rotateY: 0, opacity: 1 }}
-              transition={{ ...spring, delay: index * 0.14 }}
-            >
-              <img
-                src={getCardFrontPath(card.number)}
-                alt={`${card.name}${card.state}`}
-                className={cn(card.state === "逆位" && "is-reversed")}
-                draggable={false}
-              />
-              <figcaption>
-                <span className="sm-pos">{card.position}</span>
-                <strong>
-                  {card.name} · {card.state}
-                </strong>
-              </figcaption>
-            </motion.figure>
-          ))}
-        </div>
-
-        <div className="sm-reading">
-          <p className="sm-reading-kicker">AI 中性深度解读</p>
-          <p className="sm-reading-summary">
-            {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
-          </p>
-          <div className="sm-reading-grid">
-            {drawnCards.map((card) => {
-              const item = reading?.perCard.find((entry) => entry.position === card.position);
-              return (
-                <article key={card.position} className="sm-reading-item">
-                  <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
-                  <p>{item?.text ?? (isLoading ? "" : "—")}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <NavBar onHome={onReset} />
+      <ReadingPage background={endBg} text={readingText} />
     </motion.div>
   );
 }
+
 
 /* ----------------------------------------------------------- SHARED BITS */
 
