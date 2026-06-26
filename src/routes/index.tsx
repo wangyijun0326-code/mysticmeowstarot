@@ -1034,7 +1034,7 @@ function EndStage({
         </div>
 
         <div className="sm-reading">
-          <p className="sm-reading-kicker">AI 中性深度解读</p>
+          <p className="sm-reading-kicker">本次牌讯</p>
           <p className="sm-reading-summary">
             {isLoading ? (
               "正在召唤解读……"
