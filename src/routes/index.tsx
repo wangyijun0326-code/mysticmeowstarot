@@ -286,11 +286,18 @@ function Index() {
             />
           )}
           {gameState === "REVERSAL" && spreadId && (
-            <ReversalStage key="reversal" drawnCards={drawnCards} onRevealed={goToEnd} />
+            <ReversalStage
+              key="reversal"
+              spreadId={spreadId}
+              drawnCards={drawnCards}
+              onRevealed={goToEnd}
+              onHome={resetAll}
+            />
           )}
           {gameState === "END" && spread && spreadId && (
             <EndStage
               key="end"
+              spreadId={spreadId}
               spread={spread}
               drawnCards={drawnCards}
               reading={reading}
