@@ -255,6 +255,8 @@ function Index() {
 
         <HeaderHomeHotspots onHome={resetAll} />
 
+        <CandleGlow gameState={gameState} />
+
         <AnimatePresence>
           {gameState === "MENU" && (
             <MenuOverlay key="menu" onStart={() => setGameState("SPREAD_SELECTION")} />
@@ -289,6 +291,42 @@ function Index() {
           )}
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------- CANDLE FLAME GLOW */
+
+/**
+ * Flickering golden halo overlaid on top of the painted candle flame in each
+ * background. Positions are expressed as percentages of the stage so they
+ * track the candle artwork across viewport sizes. Pure-CSS flicker: the halo
+ * loops between opacity 0.4 and 0.9 every 0.8s (see `.sm-candle-glow`).
+ */
+function CandleGlow({ gameState }: { gameState: GameState }) {
+  // [x%, y%] of the candle flame within each background screenshot.
+  const positions: Partial<Record<GameState, { x: number; y: number }[]>> = {
+    MENU: [{ x: 11, y: 41 }],
+    SPREAD_SELECTION: [{ x: 8, y: 13 }],
+    SHUFFLE: [{ x: 90, y: 31 }],
+    DRAWING: [{ x: 7, y: 21 }],
+    SUCCESS: [{ x: 7, y: 21 }],
+    REVERSAL: [{ x: 7, y: 21 }],
+    END: [{ x: 7, y: 21 }],
+  };
+
+  const spots = positions[gameState];
+  if (!spots) return null;
+
+  return (
+    <div className="sm-layer sm-candle-glow-layer" aria-hidden="true">
+      {spots.map((p, i) => (
+        <span
+          key={i}
+          className="sm-candle-glow"
+          style={{ left: `${p.x}%`, top: `${p.y}%`, animationDelay: `${i * 0.27}s` }}
+        />
+      ))}
     </div>
   );
 }
