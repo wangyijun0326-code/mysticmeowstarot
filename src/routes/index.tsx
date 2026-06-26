@@ -342,23 +342,24 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
     >
       <Hotspot
         label="开始占卜"
-        left="75.25%"
-        top="66.8%"
-        width="8.7%"
+        left="77%"
+        top="65.4%"
+        width="11%"
         height="19.5%"
         className="is-menu-paw"
         onClick={onStart}
       />
       <Hotspot
         label="使用指南"
-        left="89.55%"
-        top="66.8%"
-        width="8.7%"
+        left="89.2%"
+        top="65.4%"
+        width="11%"
         height="19.5%"
         className="is-menu-paw"
         onClick={() => undefined}
         muted
       />
+
     </motion.div>
   );
 }
