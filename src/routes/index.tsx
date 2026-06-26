@@ -7,7 +7,7 @@ import {
   useTransform,
   type MotionValue,
 } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, RotateCcw } from "lucide-react";
 import {
   SPREADS,
@@ -252,6 +252,8 @@ function Index() {
           <img className="sm-base" src={baseImage} alt="" draggable={false} aria-hidden="true" />
         )}
 
+        <HeaderHomeHotspots onHome={resetAll} />
+
         <AnimatePresence>
           {gameState === "MENU" && (
             <MenuOverlay key="menu" onStart={() => setGameState("SPREAD_SELECTION")} />
@@ -301,6 +303,32 @@ function GlobalBackButton({ onBack, label }: { onBack: () => void; label: string
   );
 }
 
+function HeaderHomeHotspots({ onHome }: { onHome: () => void }) {
+  const items = [
+    { label: "HOME", left: "19.1%", width: "8.2%" },
+    { label: "ABOUT", left: "31.2%", width: "8.2%" },
+    { label: "HISTORY", left: "67.8%", width: "9.2%" },
+    { label: "CONTACT", left: "82.8%", width: "9.2%" },
+  ] as const;
+
+  return (
+    <div className="sm-layer sm-nav-hotspots">
+      {items.map((item) => (
+        <Hotspot
+          key={item.label}
+          label={`${item.label} 返回首页`}
+          left={item.left}
+          top="5.4%"
+          width={item.width}
+          height="7.2%"
+          className="is-nav-link"
+          onClick={onHome}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ MENU */
 
 function MenuOverlay({ onStart }: { onStart: () => void }) {
@@ -311,13 +339,22 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Hotspot label="开始占卜" left="75.3%" top="66.5%" width="9.5%" height="22%" onClick={onStart} />
+      <Hotspot
+        label="开始占卜"
+        left="75.25%"
+        top="66.8%"
+        width="8.7%"
+        height="19.5%"
+        className="is-menu-paw"
+        onClick={onStart}
+      />
       <Hotspot
         label="使用指南"
-        left="89.6%"
-        top="66.5%"
-        width="9.5%"
-        height="22%"
+        left="89.55%"
+        top="66.8%"
+        width="8.7%"
+        height="19.5%"
+        className="is-menu-paw"
         onClick={() => undefined}
         muted
       />
@@ -328,10 +365,10 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
 /* -------------------------------------------------------- SPREAD SELECTION */
 
 function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
-  const panels: Array<{ id: SpreadId; left: string }> = [
-    { id: "daily", left: "24.5%" },
-    { id: "three", left: "50%" },
-    { id: "either", left: "75.3%" },
+  const panels: Array<{ id: SpreadId; left: string; rotate: string }> = [
+    { id: "daily", left: "24.2%", rotate: "-4.5deg" },
+    { id: "three", left: "50%", rotate: "0deg" },
+    { id: "either", left: "75.3%", rotate: "0deg" },
   ];
   return (
     <motion.div
@@ -345,9 +382,11 @@ function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
           key={panel.id}
           label={SPREADS[panel.id].subtitle}
           left={panel.left}
-          top="56%"
-          width="20.5%"
-          height="48%"
+          top="56.2%"
+          width="22%"
+          height="49%"
+          className="is-spread-panel"
+          rotate={panel.rotate}
           onClick={() => onChoose(panel.id)}
         />
       ))}
