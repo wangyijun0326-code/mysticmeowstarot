@@ -788,21 +788,23 @@ function DrawingStage({
 /* ------------------------------------------------ REVERSAL (swipe to flip) */
 
 function ReversalStage({
+  spreadId,
   drawnCards,
   onRevealed,
+  onHome,
 }: {
+  spreadId: SpreadId;
   drawnCards: DrawnCard[];
   onRevealed: () => void;
+  onHome: () => void;
 }) {
   const { pointerRef } = useGesture();
-  const [flipped, setFlipped] = useState(false);
-  const flippedRef = useRef(false);
+  const revealedRef = useRef(false);
 
   const trigger = useCallback(() => {
-    if (flippedRef.current) return;
-    flippedRef.current = true;
-    setFlipped(true);
-    window.setTimeout(onRevealed, 1100);
+    if (revealedRef.current) return;
+    revealedRef.current = true;
+    window.setTimeout(onRevealed, 700);
   }, [onRevealed]);
 
   // Swipe-right detection (hand): track left→right horizontal travel.
@@ -815,7 +817,7 @@ function ReversalStage({
       if (p.handActive) {
         buf.push({ x: p.x, t: now });
         while (buf.length && now - buf[0].t > 500) buf.shift();
-        if (buf.length > 3 && !flippedRef.current) {
+        if (buf.length > 3 && !revealedRef.current) {
           const dx = buf[buf.length - 1].x - buf[0].x;
           if (dx > window.innerWidth * 0.22) trigger();
         }
@@ -828,6 +830,14 @@ function ReversalStage({
     return () => cancelAnimationFrame(raf);
   }, [pointerRef, trigger]);
 
+  // Real card faces pasted (perspective) into the glowing slots of the
+  // *_reversal screenshot, ordered to match the QUAD slots in TarotApp.
+  const revealBg = assetUrl(SPREAD_ASSETS[spreadId].reversal);
+  const cards = REVEAL_SLOT_ORDER[spreadId].map((slot) => {
+    const card = drawnCards.find((c) => c.slotIndex === slot);
+    return card ? getCardFrontPath(card.number) : "";
+  });
+
   return (
     <motion.div
       className="sm-layer sm-reversal"
@@ -835,50 +845,22 @@ function ReversalStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Full-stage 3D flip surface */}
-      <div className="sm-flip-scene">
-        <motion.div
-          className="sm-flip-card"
-          animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div className="sm-flip-face sm-flip-front">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img key={card.position} src={BACK_SRC} alt="" draggable={false} />
-              ))}
-            </div>
-          </div>
-          <div className="sm-flip-face sm-flip-back">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img
-                  key={card.position}
-                  src={getCardFrontPath(card.number)}
-                  alt={`${card.name}${card.state}`}
-                  className={cn(card.state === "逆位" && "is-reversed")}
-                  draggable={false}
-                />
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
+      <NavBar onHome={onHome} />
+      <TarotReveal spread={REVEAL_SPREAD[spreadId]} background={revealBg} cards={cards} />
 
-      {!flipped && (
-        <button type="button" className="sm-swipe-hit" onClick={trigger} data-gesture aria-label="向右滑动揭晓">
-          <motion.span
-            className="sm-reveal-hint"
-            animate={{ opacity: [0.5, 1, 0.5], x: [0, 14, 0] }}
-            transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
-          >
-            向右滑动揭晓 →
-          </motion.span>
-        </button>
-      )}
+      <button type="button" className="sm-swipe-hit" onClick={trigger} data-gesture aria-label="查看解读">
+        <motion.span
+          className="sm-reveal-hint"
+          animate={{ opacity: [0.5, 1, 0.5], x: [0, 14, 0] }}
+          transition={{ duration: 1.8, repeat: Number.POSITIVE_INFINITY }}
+        >
+          向右滑动查看解读 →
+        </motion.span>
+      </button>
     </motion.div>
   );
 }
+
 
 /* --------------------------------------------------------- END (reading) */
 
