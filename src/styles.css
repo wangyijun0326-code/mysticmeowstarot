@@ -258,14 +258,53 @@
     0 0 32px color-mix(in oklab, var(--gold) 14%, transparent) inset;
 }
 
-.sm-hotspot.is-nav-link {
-  border-radius: 999px;
+.sm-nav-hotspots {
+  z-index: 25;
+  pointer-events: none;
 }
 
-.sm-hotspot.is-nav-link:hover {
+.sm-nav-button {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
   background: transparent;
-  box-shadow: none;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: clamp(0.55rem, 1.2vw, 1rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.25s ease, box-shadow 0.25s ease, color 0.25s ease, transform 0.2s ease;
+  text-shadow: 0 1px 10px oklch(0.03 0.01 300 / 60%);
 }
+
+.sm-nav-button__label {
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+
+.sm-nav-button:hover,
+.sm-nav-button:focus-visible {
+  background: color-mix(in oklab, var(--gold) 10%, transparent);
+  box-shadow: 0 0 0 1px var(--gold-soft), 0 0 24px var(--glow-soft) inset;
+  transform: translateY(-1px);
+}
+
+.sm-nav-button:hover .sm-nav-button__label,
+.sm-nav-button:focus-visible .sm-nav-button__label {
+  opacity: 1;
+}
+
+.sm-nav-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 
 .sm-hotspot.is-muted:hover {
   background: color-mix(in oklab, var(--gold) 4%, transparent);
