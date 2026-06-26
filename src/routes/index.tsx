@@ -865,6 +865,7 @@ function ReversalStage({
 /* --------------------------------------------------------- END (reading) */
 
 function EndStage({
+  spreadId,
   spread,
   drawnCards,
   reading,
@@ -872,6 +873,7 @@ function EndStage({
   error,
   onReset,
 }: {
+  spreadId: SpreadId;
   spread: (typeof SPREADS)[SpreadId];
   drawnCards: DrawnCard[];
   reading:
@@ -881,30 +883,28 @@ function EndStage({
   error: string | null;
   onReset: () => void;
 }) {
-  const { pointerRef } = useGesture();
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+  // Compose the AI reading into a single scrollable text block for ReadingPage.
+  const readingText = isLoading
+    ? "正在召唤解读……"
+    : error
+      ? error
+      : reading
+        ? [
+            spread.interpretationTitle,
+            "",
+            reading.summary,
+            "",
+            ...reading.perCard.flatMap((entry) => [
+              `【${entry.title}】`,
+              entry.text,
+              "",
+            ]),
+          ]
+            .join("\n")
+            .trim()
+        : "";
 
-  // Hand vertical pan → smooth scroll the reading panel (no click-to-page).
-  useEffect(() => {
-    let raf = 0;
-    let lastY: number | null = null;
-    const loop = () => {
-      const p = pointerRef.current;
-      const el = scrollRef.current;
-      if (el && p.handActive && !p.down) {
-        if (lastY !== null) {
-          const dy = p.y - lastY;
-          if (Math.abs(dy) > 1) el.scrollBy({ top: dy * 2.4 });
-        }
-        lastY = p.y;
-      } else {
-        lastY = null;
-      }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [pointerRef]);
+  const endBg = assetUrl(SPREAD_ASSETS[spreadId].end);
 
   return (
     <motion.div
@@ -913,62 +913,12 @@ function EndStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="sm-end-panel" ref={scrollRef}>
-        <header className="sm-result-head">
-          <p className="sm-kicker">{spread.title}</p>
-          <h1>{spread.interpretationTitle}</h1>
-          <p className="sm-sub">{spread.subtitle}</p>
-          <button type="button" className="sm-pill" onClick={onReset} data-gesture>
-            <RotateCcw className="size-4" /> 重新占卜
-          </button>
-        </header>
-
-        <div className="sm-card-row">
-          {drawnCards.map((card, index) => (
-            <motion.figure
-              key={card.position}
-              className="sm-result-card"
-              initial={{ rotateY: 90, opacity: 0 }}
-              animate={{ rotateY: 0, opacity: 1 }}
-              transition={{ ...spring, delay: index * 0.14 }}
-            >
-              <img
-                src={getCardFrontPath(card.number)}
-                alt={`${card.name}${card.state}`}
-                className={cn(card.state === "逆位" && "is-reversed")}
-                draggable={false}
-              />
-              <figcaption>
-                <span className="sm-pos">{card.position}</span>
-                <strong>
-                  {card.name} · {card.state}
-                </strong>
-              </figcaption>
-            </motion.figure>
-          ))}
-        </div>
-
-        <div className="sm-reading">
-          <p className="sm-reading-kicker">AI 中性深度解读</p>
-          <p className="sm-reading-summary">
-            {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
-          </p>
-          <div className="sm-reading-grid">
-            {drawnCards.map((card) => {
-              const item = reading?.perCard.find((entry) => entry.position === card.position);
-              return (
-                <article key={card.position} className="sm-reading-item">
-                  <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
-                  <p>{item?.text ?? (isLoading ? "" : "—")}</p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      <NavBar onHome={onReset} />
+      <ReadingPage background={endBg} text={readingText} />
     </motion.div>
   );
 }
+
 
 /* ----------------------------------------------------------- SHARED BITS */
 
