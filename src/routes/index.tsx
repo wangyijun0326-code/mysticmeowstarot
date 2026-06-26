@@ -122,8 +122,8 @@ function Index() {
     // of a separate custom layout that ignored the design.
     if (gameState === "DRAWING") return assetUrl(a.draw);
     if (gameState === "SUCCESS") return assetUrl(a.success);
-    if (gameState === "REVERSAL") return assetUrl(a.reversal);
-    if (gameState === "END") return assetUrl(a.end);
+    // REVERSAL (揭示页) and END (结果页) render their own full backgrounds
+    // through TarotApp's <TarotReveal /> and <ReadingPage />.
     return null;
   }, [gameState, spreadId]);
 
