@@ -643,12 +643,10 @@
   display: flex;
   flex-direction: column;
   gap: clamp(1.2rem, 3vw, 2.2rem);
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 3vw, 2rem);
-  background: linear-gradient(
-    to bottom,
-    oklch(0.04 0.02 300 / 78%),
-    oklch(0.04 0.02 300 / 92%)
-  );
+  /* Sit INSIDE the end.png frame (below the nav bar, within the gold border)
+     instead of covering the whole design with a dark sheet. */
+  padding: 13vh clamp(3.5rem, 8vw, 7rem) 8vh;
+  background: transparent;
 }
 
 .sm-end-panel::-webkit-scrollbar {
