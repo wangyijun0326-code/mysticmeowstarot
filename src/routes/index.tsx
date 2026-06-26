@@ -678,6 +678,23 @@ function ShuffleCard({
 
 type DragPhase = "idle" | "pressing" | "dragging";
 
+type Flight = {
+  id: string;
+  card: SessionDeckCard;
+  slotIndex: number;
+  cardW: number;
+  cardH: number;
+  fromX: number;
+  fromY: number;
+  midX: number;
+  toX: number;
+  toY: number;
+  arcY: number;
+  toScale: number;
+};
+
+const FLIGHT_MS = 900;
+
 function DrawingStage({
   spreadId,
   drawnCards,
@@ -697,11 +714,23 @@ function DrawingStage({
   const slots = spreadLayout.slots;
 
   const cardRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const slotRefs = useRef<Map<number, HTMLElement>>(new Map());
   const poolWrapRef = useRef<HTMLDivElement | null>(null);
   const poolRef = useRef<HTMLDivElement | null>(null);
   // Single controlled offset for the carousel — driven by BOTH mouse drag
   // (framer) and hand swipe, so the rail moves either way.
   const poolX = useMotionValue(0);
+
+  // ---- Flight + golden-trail state -------------------------------------
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const flightsRef = useRef<Flight[]>([]);
+  flightsRef.current = flights;
+  const [flashIndex, setFlashIndex] = useState<number | null>(null);
+  const inFlightIdsRef = useRef<Set<string>>(new Set());
+  const flightElRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawnCardsRef = useRef(drawnCards);
+  drawnCardsRef.current = drawnCards;
 
   const railRef = useRef(railDeck);
   railRef.current = railDeck;
@@ -716,6 +745,71 @@ function DrawingStage({
     if (!track || !wrap) return 0;
     return Math.min(0, wrap.clientWidth - track.scrollWidth);
   }, []);
+
+  // Launch a chosen card on a bezier arc into the next empty slot, leaving a
+  // golden particle trail. The card is only committed to the spread (onDraw)
+  // once it lands, so the trail + slot landing flash read as "draw success".
+  const launch = useCallback(
+    (card: SessionDeckCard) => {
+      if (lockedRef.current) return;
+      if (inFlightIdsRef.current.has(card.instanceId)) return;
+      const taken = drawnCardsRef.current.length + flightsRef.current.length;
+      if (taken >= slots.length) return;
+
+      const fromEl = cardRefs.current.get(card.instanceId);
+      const slotIndex = taken;
+      const slotEl = slotRefs.current.get(slotIndex);
+      if (!fromEl || !slotEl) {
+        onDraw(card);
+        return;
+      }
+
+      const fr = fromEl.getBoundingClientRect();
+      const tr = slotEl.getBoundingClientRect();
+      const cardW = fr.width;
+      const cardH = fr.height;
+      const fromX = fr.left;
+      const fromY = fr.top;
+      const toX = tr.left + tr.width / 2 - cardW / 2;
+      const toY = tr.top + tr.height / 2 - cardH / 2;
+      const toScale = tr.width / cardW || 1;
+      const midX = (fromX + toX) / 2;
+      const dist = Math.hypot(toX - fromX, toY - fromY);
+      const arcY = Math.min(fromY, toY) - Math.max(70, dist * 0.2);
+
+      const flight: Flight = {
+        id: `f-${card.instanceId}-${Date.now()}`,
+        card,
+        slotIndex,
+        cardW,
+        cardH,
+        fromX,
+        fromY,
+        midX,
+        toX,
+        toY,
+        arcY,
+        toScale,
+      };
+      inFlightIdsRef.current.add(card.instanceId);
+      setFlights((prev) => [...prev, flight]);
+    },
+    [onDraw, slots.length],
+  );
+
+  const completeFlight = useCallback(
+    (flight: Flight) => {
+      onDraw(flight.card);
+      setFlashIndex(flight.slotIndex);
+      window.setTimeout(() => {
+        setFlashIndex((cur) => (cur === flight.slotIndex ? null : cur));
+      }, 600);
+      flightElRefs.current.delete(flight.id);
+      inFlightIdsRef.current.delete(flight.card.instanceId);
+      setFlights((prev) => prev.filter((f) => f.id !== flight.id));
+    },
+    [onDraw],
+  );
 
   // Hit-test the topmost card under a point (so a pinch grabs exactly one).
   const findCardAt = useCallback((x: number, y: number): SessionDeckCard | null => {
@@ -735,6 +829,86 @@ function DrawingStage({
       }
     }
     return best;
+  }, []);
+
+  // Golden particle trail: a fixed, full-viewport canvas that high-frequency
+  // emits shrinking, glowing gold sparks at each in-flight card's live center.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    type P = { x: number; y: number; vx: number; vy: number; size: number; life: number; max: number };
+    const particles: P[] = [];
+    let raf = 0;
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const spawn = (cx: number, cy: number) => {
+      const ang = Math.random() * Math.PI * 2;
+      const sp = Math.random() * 1.8 + 0.3;
+      const max = Math.random() * 28 + 26;
+      particles.push({
+        x: cx + (Math.random() - 0.5) * 12,
+        y: cy + (Math.random() - 0.5) * 12,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - 0.4,
+        size: Math.random() * 4 + 2.5,
+        life: max,
+        max,
+      });
+    };
+
+    const loop = () => {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      flightElRefs.current.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        for (let i = 0; i < 4; i++) spawn(cx, cy);
+      });
+
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.03;
+        p.vx *= 0.98;
+        p.life -= 1;
+        p.size *= 0.95;
+        if (p.life <= 0 || p.size < 0.4) {
+          particles.splice(i, 1);
+          continue;
+        }
+        const a = Math.max(0, p.life / p.max);
+        const radius = p.size * 2.6;
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+        g.addColorStop(0, `rgba(255,231,160,${a})`);
+        g.addColorStop(0.4, `rgba(240,168,58,${a * 0.6})`);
+        g.addColorStop(1, "rgba(201,130,31,0)");
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = "source-over";
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
   }, []);
 
   // Hand loop: (1) open-hand horizontal move → browse the rail; (2) pinch over a
@@ -767,7 +941,7 @@ function DrawingStage({
           if (!pinchPrev && now > cooldown) {
             const card = findCardAt(p.x, p.y);
             if (card) {
-              onDraw(card);
+              launch(card);
               cooldown = now + 450;
             }
           }
@@ -782,7 +956,7 @@ function DrawingStage({
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pointerRef, onDraw, poolX, minPoolX, findCardAt]);
+  }, [pointerRef, launch, poolX, minPoolX, findCardAt]);
 
   const poolConfig =
     spreadId === "either"
@@ -796,18 +970,21 @@ function DrawingStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Chosen cards animate into the design's own painted slots. Positions
-          come from SLOT_LAYOUTS (already tuned to the screenshots). Tune the
-          width / coordinates in preview if a card sits slightly off a slot. */}
+      {/* Slot frames are always mounted (even when empty) so the flight can
+          measure its target and the gold border can breathe / flash. The
+          committed card back appears the instant its flight lands. */}
       {slots.map((slot, index) => {
-        const card = drawnCards[index];
-        if (!card) return null;
-        // Drawn-card width and slot positions come from the live layout store
-        // (tunable via the ⚙ 布局调试 panel) so each spread can be matched to
-        // its painted gold frame precisely.
+        const committed = index < drawnCards.length;
+        const arming = flights.some((f) => f.slotIndex === index);
+        const flash = flashIndex === index;
         return (
           <div
             key={index}
+            ref={(el) => {
+              if (el) slotRefs.current.set(index, el);
+              else slotRefs.current.delete(index);
+            }}
+            className={cn("sm-slot-frame", arming && "is-arming", flash && "is-flash")}
             style={{
               position: "absolute",
               left: `${slot.left}%`,
@@ -819,19 +996,20 @@ function DrawingStage({
               zIndex: 6,
             }}
           >
-            <motion.img
-              src={BACK_SRC}
-              alt="已抽取的牌背面"
-              draggable={false}
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-              initial={{ opacity: 0, y: 70, scale: 0.6 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={spring}
-            />
+            {committed && (
+              <motion.img
+                src={BACK_SRC}
+                alt="已抽取的牌背面"
+                draggable={false}
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                initial={{ opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: [1.05, 0.99, 1] }}
+                transition={{ duration: 0.45, ease: "easeOut" }}
+              />
+            )}
           </div>
         );
       })}
-
 
       {/* Bottom carousel — sits over the design's painted card strip. Mouse drag
           (framer) and hand swipe both move it; tap / pinch a card to choose. */}
@@ -877,10 +1055,10 @@ function DrawingStage({
                 whileTap={{ scale: 1.12 }}
                 onTap={() => {
                   if (draggingRef.current) return; // was a swipe, not a tap
-                  onDraw(card);
+                  launch(card);
                 }}
                 initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
+                animate={{ opacity: inFlightIdsRef.current.has(card.instanceId) ? 0 : 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.6 }}
               >
                 <img src={BACK_SRC} alt="" draggable={false} />
@@ -889,6 +1067,47 @@ function DrawingStage({
           </motion.div>
         </div>
       )}
+
+      {/* Fixed, full-viewport flight layer: golden particle canvas + the cards
+          arcing from the pool into their slots. */}
+      <div
+        className="sm-flight-layer"
+        style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 60 }}
+        aria-hidden="true"
+      >
+        <canvas ref={canvasRef} className="sm-flight-canvas" />
+        {flights.map((f) => (
+          <motion.img
+            key={f.id}
+            ref={(el) => {
+              if (el) flightElRefs.current.set(f.id, el);
+              else flightElRefs.current.delete(f.id);
+            }}
+            src={BACK_SRC}
+            alt=""
+            draggable={false}
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: f.cardW,
+              height: f.cardH,
+              objectFit: "contain",
+              willChange: "transform",
+              filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.45))",
+            }}
+            initial={{ x: f.fromX, y: f.fromY, rotate: 0, scale: 1 }}
+            animate={{
+              x: [f.fromX, f.midX, f.toX],
+              y: [f.fromY, f.arcY, f.toY],
+              rotate: [0, 5, 8],
+              scale: [1, 1.05, f.toScale],
+            }}
+            transition={{ duration: FLIGHT_MS / 1000, ease: [0.16, 1, 0.3, 1], times: [0, 0.5, 1] }}
+            onAnimationComplete={() => completeFlight(f)}
+          />
+        ))}
+      </div>
 
       <SlotLayoutDebugger spreadId={spreadId} />
     </motion.div>
