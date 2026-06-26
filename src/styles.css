@@ -991,3 +991,33 @@
 }
 
 
+
+/* ------------------------------------------------- BACKGROUND MUSIC TOGGLE */
+.sm-bgm-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  color: #e8d5a0;
+  background: rgba(20, 14, 30, 0.42);
+  border: 1px solid rgba(214, 184, 120, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+.sm-bgm-toggle:hover {
+  transform: scale(1.06);
+  background: rgba(40, 28, 56, 0.6);
+  border-color: rgba(232, 213, 160, 0.8);
+}
+.sm-bgm-toggle:active {
+  transform: scale(0.96);
+}

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { GestureProvider } from "@/components/gesture/gesture-provider";
+import { BgmPlayer } from "@/components/bgm-player";
 
 function useEnsureSession() {
   useEffect(() => {
@@ -157,6 +158,7 @@ function RootComponent() {
       {mounted ? (
         <GestureProvider>
           <Outlet />
+          <BgmPlayer />
         </GestureProvider>
       ) : (
         <Outlet />
