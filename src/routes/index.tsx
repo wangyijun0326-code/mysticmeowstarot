@@ -21,6 +21,8 @@ import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
 import { useSlotLayout } from "@/lib/slot-layout";
 import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
+import { useGlow } from "@/lib/candle-glow";
+import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -256,6 +258,8 @@ function Index() {
         <HeaderHomeHotspots onHome={resetAll} />
 
         <CandleGlow gameState={gameState} />
+        <CandleGlowDebugger gameState={gameState} />
+
 
         <AnimatePresence>
           {gameState === "MENU" && (
@@ -304,19 +308,9 @@ function Index() {
  * loops between opacity 0.4 and 0.9 every 0.8s (see `.sm-candle-glow`).
  */
 function CandleGlow({ gameState }: { gameState: GameState }) {
-  // [x%, y%] of the candle flame within each background screenshot.
-  const positions: Partial<Record<GameState, { x: number; y: number }[]>> = {
-    MENU: [{ x: 12, y: 36 }],
-    SPREAD_SELECTION: [{ x: 8, y: 13 }],
-    SHUFFLE: [{ x: 90, y: 31 }],
-    DRAWING: [{ x: 7, y: 21 }],
-    SUCCESS: [{ x: 7, y: 21 }],
-    REVERSAL: [{ x: 7, y: 21 }],
-    END: [{ x: 7, y: 21 }],
-  };
-
-  const spots = positions[gameState];
-  if (!spots) return null;
+  const glow = useGlow();
+  const spots = glow[gameState];
+  if (!spots || spots.length === 0) return null;
 
   return (
     <div className="sm-layer sm-candle-glow-layer" aria-hidden="true">
