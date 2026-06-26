@@ -283,9 +283,10 @@
 }
 
 .sm-nav-button__label {
-  opacity: 0;
+  opacity: 0.55;
   transition: opacity 0.2s ease;
 }
+
 
 .sm-nav-button:hover,
 .sm-nav-button:focus-visible {
