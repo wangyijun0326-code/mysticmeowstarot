@@ -342,23 +342,24 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
     >
       <Hotspot
         label="开始占卜"
-        left="75.25%"
-        top="66.8%"
-        width="8.7%"
+        left="77%"
+        top="65.4%"
+        width="11%"
         height="19.5%"
         className="is-menu-paw"
         onClick={onStart}
       />
       <Hotspot
         label="使用指南"
-        left="89.55%"
-        top="66.8%"
-        width="8.7%"
+        left="89.2%"
+        top="65.4%"
+        width="11%"
         height="19.5%"
         className="is-menu-paw"
         onClick={() => undefined}
         muted
       />
+
     </motion.div>
   );
 }
@@ -367,9 +368,9 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
 
 function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
   const panels: Array<{ id: SpreadId; left: string; rotate: string }> = [
-    { id: "daily", left: "24.2%", rotate: "-4.5deg" },
-    { id: "three", left: "50%", rotate: "0deg" },
-    { id: "either", left: "75.3%", rotate: "0deg" },
+    { id: "daily", left: "23.3%", rotate: "0deg" },
+    { id: "three", left: "49.4%", rotate: "0deg" },
+    { id: "either", left: "76.3%", rotate: "0deg" },
   ];
   return (
     <motion.div
@@ -383,9 +384,9 @@ function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
           key={panel.id}
           label={SPREADS[panel.id].subtitle}
           left={panel.left}
-          top="56.2%"
-          width="22%"
-          height="49%"
+          top="56.5%"
+          width="24.5%"
+          height="47%"
           className="is-spread-panel"
           rotate={panel.rotate}
           onClick={() => onChoose(panel.id)}
@@ -393,6 +394,7 @@ function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
       ))}
     </motion.div>
   );
+
 }
 
 /* -------------------------------------------------- SHUFFLE (physics pile) */
