@@ -860,6 +860,38 @@ function ReversalStage({
 
 /* --------------------------------------------------------- END (reading) */
 
+function Typewriter({
+  text,
+  speed = 26,
+  startDelay = 0,
+}: {
+  text: string;
+  speed?: number;
+  startDelay?: number;
+}) {
+  const [shown, setShown] = useState("");
+
+  useEffect(() => {
+    setShown("");
+    if (!text) return;
+    let i = 0;
+    let interval = 0;
+    const start = window.setTimeout(() => {
+      interval = window.setInterval(() => {
+        i += 1;
+        setShown(text.slice(0, i));
+        if (i >= text.length) window.clearInterval(interval);
+      }, speed);
+    }, startDelay);
+    return () => {
+      window.clearTimeout(start);
+      window.clearInterval(interval);
+    };
+  }, [text, speed, startDelay]);
+
+  return <>{shown}</>;
+}
+
 function EndStage({
   spread,
   drawnCards,
