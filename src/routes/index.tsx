@@ -979,15 +979,29 @@ function EndStage({
         <div className="sm-reading">
           <p className="sm-reading-kicker">AI 中性深度解读</p>
           <p className="sm-reading-summary">
-            {isLoading ? "正在召唤解读……" : error ? error : reading?.summary}
+            {isLoading ? (
+              "正在召唤解读……"
+            ) : error ? (
+              error
+            ) : (
+              <Typewriter text={reading?.summary ?? ""} speed={24} />
+            )}
           </p>
           <div className="sm-reading-grid">
-            {drawnCards.map((card) => {
+            {drawnCards.map((card, index) => {
               const item = reading?.perCard.find((entry) => entry.position === card.position);
               return (
                 <article key={card.position} className="sm-reading-item">
                   <h3>{item?.title ?? `${card.position}｜${card.name} · ${card.state}`}</h3>
-                  <p>{item?.text ?? (isLoading ? "" : "—")}</p>
+                  <p>
+                    {item?.text ? (
+                      <Typewriter text={item.text} speed={30} startDelay={400 + index * 220} />
+                    ) : isLoading ? (
+                      ""
+                    ) : (
+                      "—"
+                    )}
+                  </p>
                 </article>
               );
             })}
