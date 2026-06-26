@@ -161,19 +161,19 @@ export const SPREAD_ASSETS: Record<
     draw: "one_card.png",
     success: "one_card_success.png",
     reversal: "one_card_reversal.png",
-    end: "one-end.png",
+    end: "end.png",
   },
   three: {
     draw: "three_cards.png",
     success: "three_cards_success.png",
     reversal: "three_cards_reversal.png",
-    end: "three-end.png",
+    end: "end.png",
   },
   either: {
     draw: "five_cards.png",
     success: "five_cards_success.png",
     reversal: "five_cards_reversal.png",
-    end: "five-end.png",
+    end: "end.png",
   },
 };
 
