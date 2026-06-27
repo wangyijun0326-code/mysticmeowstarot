@@ -21,6 +21,8 @@ import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
 import { useSlotLayout } from "@/lib/slot-layout";
 import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
+import { useHotspotLayout } from "@/lib/hotspot-layout";
+import { HotspotDebugger } from "@/components/hotspot-debugger";
 import { useGlow } from "@/lib/candle-glow";
 import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
 import { cn } from "@/lib/utils";
