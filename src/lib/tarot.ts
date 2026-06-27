@@ -160,7 +160,7 @@ export const SPREAD_ASSETS: Record<
   daily: {
     draw: "one_card.png",
     reversal: "one_card_reversal.png",
-    end: "end.png",
+    end: "one-end.png",
   },
   three: {
     draw: "three_cards.png",
