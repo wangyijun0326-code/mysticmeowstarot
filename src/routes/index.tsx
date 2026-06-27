@@ -605,9 +605,9 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
           {shuffling && (
             <motion.div
               className="sm-pile-glow"
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: [0, 0.9, 0], scale: [0.6, 1.3, 1.6] }}
-              transition={{ duration: 1.3 }}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: [0, 0.75, 0], scale: [0.7, 1.15, 1.4] }}
+              transition={{ duration: 1.4, ease: "easeOut" }}
             />
           )}
         </AnimatePresence>

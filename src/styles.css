@@ -459,11 +459,17 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 240%;
-  height: 240%;
+  width: 180%;
+  height: 180%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, var(--glow-strong) 0%, transparent 62%);
+  /* Warm, soft magical charge emanating from the cards — layered amber→gold
+     core that fades smoothly into the dark velvet instead of a hard yellow disc. */
+  background:
+    radial-gradient(circle, oklch(0.92 0.11 86 / 55%) 0%, transparent 38%),
+    radial-gradient(circle, var(--glow-soft) 0%, transparent 60%);
+  filter: blur(6px);
+  mix-blend-mode: screen;
   pointer-events: none;
 }
 
