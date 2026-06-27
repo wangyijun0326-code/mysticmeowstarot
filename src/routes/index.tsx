@@ -525,7 +525,6 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
   const { pointerRef } = useGesture();
   const layout = useHotspotLayout();
   const [shuffling, setShuffling] = useState(false);
-  const [showHint, setShowHint] = useState(true);
   const doneRef = useRef(false);
   const pileRef = useRef<HTMLDivElement | null>(null);
   // Plain-number physics state shared with each ShuffleCard by index.
