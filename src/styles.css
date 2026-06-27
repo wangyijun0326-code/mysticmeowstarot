@@ -214,25 +214,42 @@
   inset: 0;
 }
 
-/* ---- Dismissable gesture guide toast ------------------------------------ */
+/* ---- Draggable, dismissable gesture guide toast -------------------------- */
 .sm-guide-toast {
   position: fixed;
-  top: clamp(1rem, 3vh, 2.5rem);
+  top: clamp(5rem, 10vh, 6.5rem);
   right: clamp(1rem, 3vw, 2.5rem);
   z-index: 100;
   width: min(92vw, 380px);
-  padding: 1.1rem 1.25rem 1.25rem;
+  padding: 0.9rem 1.25rem 1.15rem;
   border-radius: 1rem;
   border: 1px solid color-mix(in oklab, var(--gold) 30%, transparent);
-  background: color-mix(in oklab, var(--background) 78%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: color-mix(in oklab, var(--background) 52%, transparent);
+  backdrop-filter: blur(16px) saturate(130%);
   box-shadow:
     0 16px 40px oklch(0.03 0.01 300 / 55%),
     0 0 0 1px color-mix(in oklab, var(--gold) 15%, transparent);
   color: var(--color-foreground);
   font-family: var(--font-body);
   pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.sm-guide-toast__dragbar {
+  display: flex;
+  justify-content: center;
+  padding: 0.15rem 0 0.5rem;
+  margin: -0.35rem 0 0.15rem;
+  cursor: grab;
+}
+
+.sm-guide-toast__dragdots {
+  width: 2.25rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--gold) 42%, transparent);
 }
 
 .sm-guide-toast__close {
@@ -250,6 +267,7 @@
   color: var(--gold);
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
+  z-index: 1;
 }
 
 .sm-guide-toast__close:hover {
@@ -257,14 +275,20 @@
   transform: scale(1.05);
 }
 
+.sm-guide-toast__header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 2rem 0.6rem 0;
+}
+
 .sm-guide-toast__paw {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   line-height: 1;
-  margin-bottom: 0.35rem;
 }
 
 .sm-guide-toast__title {
-  margin: 0 2rem 0.6rem 0;
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 600;
@@ -290,9 +314,9 @@
 
 @media (max-width: 640px) {
   .sm-guide-toast {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    right: 4vw;
+    left: auto;
+    width: 88vw;
   }
 }
 

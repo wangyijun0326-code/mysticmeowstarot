@@ -70,27 +70,37 @@ const BACK_SRC = "/assets/back.png";
 const assetUrl = (file: string) => `/assets/${file}`;
 const spring = { type: "spring", stiffness: 200, damping: 24, mass: 0.8 } as const;
 
-/** Dismissable semi-transparent gesture guide popup. */
+/** Draggable, dismissable semi-transparent gesture guide popup. */
 function GestureGuideToast({ onClose }: { onClose: () => void }) {
   return (
     <motion.div
       className="sm-guide-toast"
+      drag
+      dragMomentum={false}
+      dragElastic={0.08}
+      whileDrag={{ scale: 1.02, cursor: "grabbing" }}
       initial={{ opacity: 0, y: -20, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -12, scale: 0.96 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
+      <div className="sm-guide-toast__dragbar" aria-hidden="true">
+        <span className="sm-guide-toast__dragdots" />
+      </div>
       <button
         type="button"
         className="sm-guide-toast__close"
         onClick={onClose}
         aria-label="关闭手势指南"
         data-gesture-ignore
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <X className="size-4" />
       </button>
-      <div className="sm-guide-toast__paw">🐾</div>
-      <h3 className="sm-guide-toast__title">隔空召唤 · 喵爪手势指南</h3>
+      <div className="sm-guide-toast__header">
+        <span className="sm-guide-toast__paw">🐾</span>
+        <h3 className="sm-guide-toast__title">喵爪手势指南</h3>
+      </div>
       <p className="sm-guide-toast__body">
         恭喜解锁“隔空抽牌”魔法！动作慢一点更灵验哦：
         <br />
