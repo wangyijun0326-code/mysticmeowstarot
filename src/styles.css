@@ -799,43 +799,6 @@
   margin-right: 0;
 }
 
-/* Guide layer: clean gold chevrons drawn purely with pseudo-elements, pinned to
-   the exact spots of the painted arrows (~6.5% / 93.5% x, ~73% y). Highest
-   z-index so they stay crisp above the card rail; never intercept pointers. */
-.sm-draw-arrows {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 55;
-}
-
-.sm-draw-arrows::before,
-.sm-draw-arrows::after {
-  content: "";
-  position: absolute;
-  top: 73%;
-  width: clamp(13px, 1.2vw, 20px);
-  height: clamp(13px, 1.2vw, 20px);
-  border: 0 solid color-mix(in oklab, var(--gold) 92%, transparent);
-  filter: drop-shadow(0 0 4px color-mix(in oklab, var(--gold) 45%, transparent));
-}
-
-/* Left chevron "‹" */
-.sm-draw-arrows::before {
-  left: 6.5%;
-  border-left-width: 2.5px;
-  border-bottom-width: 2.5px;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-/* Right chevron "›" */
-.sm-draw-arrows::after {
-  left: 93.5%;
-  border-top-width: 2.5px;
-  border-right-width: 2.5px;
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
 /* Floating card that follows the pointer while dragging */
 .sm-drag-card {
   position: fixed;

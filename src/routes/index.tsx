@@ -1145,11 +1145,6 @@ function DrawingStage({
         </div>
       )}
 
-      {/* Guide layer (topmost): clean gold chevrons regenerated via CSS
-          pseudo-elements at the exact positions of the design's painted arrows,
-          so they read clearly above the card rail and are never muddled by it. */}
-      <div className="sm-draw-arrows" aria-hidden="true" />
-
       {/* Fixed, full-viewport flight layer: golden particle canvas + the cards
           arcing from the pool into their slots. */}
       <div
