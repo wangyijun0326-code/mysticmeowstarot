@@ -15,7 +15,6 @@ export type GlowState =
   | "SPREAD_SELECTION"
   | "SHUFFLE"
   | "DRAWING"
-  | "SUCCESS"
   | "REVERSAL"
   | "END";
 
@@ -32,7 +31,6 @@ export const DEFAULT_GLOW: GlowMap = {
   SPREAD_SELECTION: [{ x: 6, y: 13 }],
   SHUFFLE: [{ x: 90, y: 24 }],
   DRAWING: [{ x: 7, y: 15 }],
-  SUCCESS: [{ x: 7, y: 15 }],
   REVERSAL: [{ x: 7, y: 15 }],
   END: [{ x: 7, y: 15 }],
 };

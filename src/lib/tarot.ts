@@ -155,23 +155,20 @@ export const SLOT_LAYOUTS: Record<SpreadId, Array<{ left: string; top: string }>
 // screenshot as an <img> base layer (never a CSS background).
 export const SPREAD_ASSETS: Record<
   SpreadId,
-  { draw: string; success: string; reversal: string; end: string }
+  { draw: string; reversal: string; end: string }
 > = {
   daily: {
     draw: "one_card.png",
-    success: "one_card_success.png",
     reversal: "one_card_reversal.png",
     end: "end.png",
   },
   three: {
     draw: "three_cards.png",
-    success: "three_cards_success.png",
     reversal: "three_cards_reversal.png",
     end: "three-end.png",
   },
   either: {
     draw: "five_cards.png",
-    success: "five_cards_success.png",
     reversal: "five_cards_reversal.png",
     end: "five-end.png",
   },
