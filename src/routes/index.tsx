@@ -530,11 +530,6 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
   // Plain-number physics state shared with each ShuffleCard by index.
   const physRef = useRef<CardPhys[]>(makePhys());
 
-  useEffect(() => {
-    const t = window.setTimeout(() => setShowHint(false), 8000);
-    return () => window.clearTimeout(t);
-  }, []);
-
   const finish = useCallback(() => {
     if (doneRef.current) return;
     doneRef.current = true;
