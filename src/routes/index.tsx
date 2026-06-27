@@ -525,10 +525,16 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
   const { pointerRef } = useGesture();
   const layout = useHotspotLayout();
   const [shuffling, setShuffling] = useState(false);
+  const [showHint, setShowHint] = useState(true);
   const doneRef = useRef(false);
   const pileRef = useRef<HTMLDivElement | null>(null);
   // Plain-number physics state shared with each ShuffleCard by index.
   const physRef = useRef<CardPhys[]>(makePhys());
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowHint(false), 8000);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
@@ -641,6 +647,20 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      <AnimatePresence>
+        {showHint && (
+          <motion.div
+            className="sm-shuffle-hint"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.6 }}
+          >
+            此处摇晃鼠标，洗牌效果更佳哦！
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="sm-pile" ref={pileRef}>
         {physRef.current.map((_, i) => (
           <ShuffleCard key={i} phys={physRef} index={i} />
@@ -648,6 +668,7 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       </div>
 
       <PileGlow shuffling={shuffling} />
+
 
 
       {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
