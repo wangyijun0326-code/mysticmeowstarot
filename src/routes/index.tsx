@@ -22,7 +22,6 @@ import { useGesture } from "@/components/gesture/gesture-provider";
 import { useSlotLayout } from "@/lib/slot-layout";
 import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
 import { useHotspotLayout } from "@/lib/hotspot-layout";
-import { HotspotDebugger } from "@/components/hotspot-debugger";
 import { useGlow } from "@/lib/candle-glow";
 import { usePileGlow, usePileGlowPreview } from "@/lib/pile-glow";
 import { cn } from "@/lib/utils";
