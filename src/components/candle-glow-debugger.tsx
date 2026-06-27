@@ -12,7 +12,6 @@ const STATE_LABELS: Record<GlowState, string> = {
   SPREAD_SELECTION: "牌阵 spreads",
   SHUFFLE: "洗牌 wash",
   DRAWING: "抽牌 drawing",
-  SUCCESS: "成功 success",
   REVERSAL: "揭示 reversal",
   END: "结果 end",
 };

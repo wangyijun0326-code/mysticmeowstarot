@@ -49,14 +49,16 @@ export const Route = createFileRoute("/")({
  * spreads. Each phase binds to a design screenshot resolved dynamically from
  * the active spread (see baseImage below).
  *
- *   MENU → SPREAD_SELECTION → SHUFFLE → DRAWING → SUCCESS → REVERSAL → END
+ *   MENU → SPREAD_SELECTION → SHUFFLE → DRAWING → REVERSAL → END
+ *
+ *   The old SUCCESS transition page has been removed; once every required slot
+ *   is filled the app advances directly to the reveal phase.
  */
 type GameState =
   | "MENU"
   | "SPREAD_SELECTION"
   | "SHUFFLE"
   | "DRAWING"
-  | "SUCCESS"
   | "REVERSAL"
   | "END";
 
@@ -109,7 +111,6 @@ function Index() {
     // cards) as the base, with live interactive cards layered on top — instead
     // of a separate custom layout that ignored the design.
     if (gameState === "DRAWING") return assetUrl(a.draw);
-    if (gameState === "SUCCESS") return assetUrl(a.success);
     if (gameState === "REVERSAL") return assetUrl(a.reversal);
     if (gameState === "END") return assetUrl(a.end);
     return null;
@@ -137,17 +138,10 @@ function Index() {
     }
   }, [spread, drawnCards]);
 
-  // Phase 3 trigger: once every required slot is filled → SUCCESS.
+  // Phase 3 trigger: once every required slot is filled → REVERSAL.
   useEffect(() => {
-    if (gameState === "DRAWING" && isDrawComplete) setGameState("SUCCESS");
+    if (gameState === "DRAWING" && isDrawComplete) setGameState("REVERSAL");
   }, [gameState, isDrawComplete]);
-
-  // SUCCESS → REVERSAL automatically after the confirmation art lingers 1.5s.
-  useEffect(() => {
-    if (gameState !== "SUCCESS") return;
-    const id = window.setTimeout(() => setGameState("REVERSAL"), 1500);
-    return () => window.clearTimeout(id);
-  }, [gameState]);
 
   // REVERSAL → END (kick off the reading on entry).
   const goToEnd = useCallback(() => {
@@ -220,7 +214,6 @@ function Index() {
         case "SHUFFLE":
           return "SPREAD_SELECTION";
         case "DRAWING":
-        case "SUCCESS":
         case "REVERSAL":
           selectedRef.current = [];
           setSelectedIds([]);
