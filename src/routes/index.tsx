@@ -24,9 +24,7 @@ import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
 import { useHotspotLayout } from "@/lib/hotspot-layout";
 import { HotspotDebugger } from "@/components/hotspot-debugger";
 import { useGlow } from "@/lib/candle-glow";
-import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
 import { usePileGlow, usePileGlowPreview } from "@/lib/pile-glow";
-import { PileGlowDebugger } from "@/components/pile-glow-debugger";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
