@@ -550,6 +550,20 @@
   transform: translate(-50%, -50%);
 }
 
+.sm-shuffle-hint {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(0.75rem, 1.4vw, 1rem);
+  color: var(--gold-soft);
+  text-shadow: 0 0 10px oklch(0.85 0.1 82 / 35%);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+}
+
 .sm-pile-card {
   position: absolute;
   inset: 0;
