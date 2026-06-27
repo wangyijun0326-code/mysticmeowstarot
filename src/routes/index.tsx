@@ -256,6 +256,7 @@ function Index() {
 
         <CandleGlow gameState={gameState} />
         <CandleGlowDebugger gameState={gameState} />
+        {gameState === "SHUFFLE" && <PileGlowDebugger />}
         <HotspotDebugger screenId={gameState === "MENU" ? "menu" : gameState === "SPREAD_SELECTION" ? "spreads" : "shuffle"} />
 
 
