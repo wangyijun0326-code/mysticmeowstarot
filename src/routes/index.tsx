@@ -479,6 +479,7 @@ function makePhys(): CardPhys[] {
 
 function ShuffleStage({ onDone }: { onDone: () => void }) {
   const { pointerRef } = useGesture();
+  const layout = useHotspotLayout();
   const [shuffling, setShuffling] = useState(false);
   const doneRef = useRef(false);
   const pileRef = useRef<HTMLDivElement | null>(null);
