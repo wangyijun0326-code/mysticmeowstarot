@@ -255,7 +255,7 @@ function Index() {
           <img className="sm-base" src={baseImage} alt="" draggable={false} aria-hidden="true" />
         )}
 
-        <HeaderHomeHotspots onHome={resetAll} />
+        <HeaderHomeHotspots top={gameState === "MENU" ? "3.2%" : "2.2%"} onHome={resetAll} />
 
         <CandleGlow gameState={gameState} />
         <CandleGlowDebugger gameState={gameState} />
@@ -336,7 +336,7 @@ function GlobalBackButton({ onBack, label }: { onBack: () => void; label: string
   );
 }
 
-function HeaderHomeHotspots({ onHome }: { onHome: () => void }) {
+function HeaderHomeHotspots({ top, onHome }: { top: string; onHome: () => void }) {
   const items = [
     { label: "HOME", left: "14.8%", width: "9.2%" },
     { label: "ABOUT", left: "26.5%", width: "9.2%" },
@@ -351,7 +351,7 @@ function HeaderHomeHotspots({ onHome }: { onHome: () => void }) {
           key={item.label}
           label={item.label}
           left={item.left}
-          top="3.2%"
+          top={top}
           width={item.width}
           height="7.5%"
           onClick={onHome}
