@@ -20,7 +20,7 @@ import {
 import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
 import { useSlotLayout } from "@/lib/slot-layout";
-import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
+
 import { useHotspotLayout } from "@/lib/hotspot-layout";
 import { useGlow } from "@/lib/candle-glow";
 import { usePileGlow, usePileGlowPreview } from "@/lib/pile-glow";
