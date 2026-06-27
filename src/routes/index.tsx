@@ -561,7 +561,9 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
     let prevY = 0;
     let prevAngle: number | null = null;
     let totalAngle = 0;
+    let usedHand = false;
     let inited = false;
+
 
     const loop = () => {
       const p = pointerRef.current;
