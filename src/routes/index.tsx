@@ -600,6 +600,7 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
 
 
         if (engaged) {
+          if (isHand) usedHand = true;
           const ang = Math.atan2(dyc, dxc);
           if (prevAngle !== null) {
             let d = ang - prevAngle;
@@ -611,6 +612,7 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
         } else {
           prevAngle = null;
         }
+
 
         for (const c of phys) {
           if (engaged) {
