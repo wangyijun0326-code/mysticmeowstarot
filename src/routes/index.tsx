@@ -239,6 +239,8 @@ function Index() {
 
   return (
     <div className="sm-root">
+      {showGestureGuide && <GestureGuideToast onClose={() => setShowGestureGuide(false)} />}
+
       {gameState !== "MENU" && (
         <GlobalBackButton
           onBack={showResult ? resetAll : goBack}
