@@ -336,7 +336,7 @@ function GlobalBackButton({ onBack, label }: { onBack: () => void; label: string
   );
 }
 
-function HeaderHomeHotspots({ onHome }: { onHome: () => void }) {
+function HeaderHomeHotspots({ top, onHome }: { top: string; onHome: () => void }) {
   const items = [
     { label: "HOME", left: "14.8%", width: "9.2%" },
     { label: "ABOUT", left: "26.5%", width: "9.2%" },
