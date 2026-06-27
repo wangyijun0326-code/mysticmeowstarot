@@ -1114,12 +1114,16 @@ function ReversalStage({
   const [flipped, setFlipped] = useState(false);
   const flippedRef = useRef(false);
 
+  const FLIP_STAGGER_MS = 420;
+  const FLIP_DURATION_MS = 1450;
+
   const trigger = useCallback(() => {
     if (flippedRef.current) return;
     flippedRef.current = true;
     setFlipped(true);
-    window.setTimeout(onRevealed, 1100);
-  }, [onRevealed]);
+    const totalMs = FLIP_DURATION_MS + Math.max(0, drawnCards.length - 1) * FLIP_STAGGER_MS;
+    window.setTimeout(onRevealed, totalMs + 280);
+  }, [drawnCards.length, onRevealed]);
 
   // Swipe-right detection (hand): track left→right horizontal travel.
   useEffect(() => {
@@ -1151,34 +1155,34 @@ function ReversalStage({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Full-stage 3D flip surface */}
       <div className="sm-flip-scene">
-        <motion.div
-          className="sm-flip-card"
-          animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div className="sm-flip-face sm-flip-front">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img key={card.position} src={BACK_SRC} alt="" draggable={false} />
-              ))}
+        <div className="sm-flip-row">
+          {drawnCards.map((card, index) => (
+            <div key={card.position} className="sm-flip-item-scene">
+              <motion.div
+                className="sm-flip-item"
+                animate={{ rotateY: flipped ? -180 : 0 }}
+                transition={{
+                  duration: FLIP_DURATION_MS / 1000,
+                  delay: (index * FLIP_STAGGER_MS) / 1000,
+                  ease: [0.22, 0.61, 0.36, 1],
+                }}
+              >
+                <div className="sm-flip-face sm-flip-front">
+                  <img src={BACK_SRC} alt="" draggable={false} />
+                </div>
+                <div className="sm-flip-face sm-flip-back">
+                  <img
+                    src={getCardFrontPath(card.number)}
+                    alt={`${card.name}${card.state}`}
+                    className={cn(card.state === "逆位" && "is-reversed")}
+                    draggable={false}
+                  />
+                </div>
+              </motion.div>
             </div>
-          </div>
-          <div className="sm-flip-face sm-flip-back">
-            <div className="sm-flip-row">
-              {drawnCards.map((card) => (
-                <img
-                  key={card.position}
-                  src={getCardFrontPath(card.number)}
-                  alt={`${card.name}${card.state}`}
-                  className={cn(card.state === "逆位" && "is-reversed")}
-                  draggable={false}
-                />
-              ))}
-            </div>
-          </div>
-        </motion.div>
+          ))}
+        </div>
       </div>
 
       {!flipped && (
