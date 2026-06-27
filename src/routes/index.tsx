@@ -1161,7 +1161,7 @@ function ReversalStage({
             <div key={card.position} className="sm-flip-item-scene">
               <motion.div
                 className="sm-flip-item"
-                animate={{ rotateY: flipped ? -180 : 0 }}
+                animate={{ rotateY: flipped ? 180 : 0 }}
                 transition={{
                   duration: FLIP_DURATION_MS / 1000,
                   delay: (index * FLIP_STAGGER_MS) / 1000,

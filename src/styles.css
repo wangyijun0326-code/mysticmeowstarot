@@ -784,7 +784,7 @@
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transform-origin: left center;
+  transform-origin: right center;
 }
 
 .sm-flip-face {
@@ -798,7 +798,7 @@
 }
 
 .sm-flip-back {
-  transform: rotateY(180deg);
+  transform: rotateY(-180deg);
 }
 
 .sm-flip-face img {
