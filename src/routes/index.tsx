@@ -615,7 +615,14 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
           no duplicate pill, no overlapping hint text. Fine-tune left/top/width/
           height in preview so it lands exactly on the painted button. */}
-      <Hotspot label="完成洗牌" left="50%" top="92%" width="14%" height="7%" onClick={finish} />
+      <Hotspot
+        label={layout.shuffle.hotspots[0]?.label ?? "完成洗牌"}
+        left={`${layout.shuffle.hotspots[0]?.left ?? 50}%`}
+        top={`${layout.shuffle.hotspots[0]?.top ?? 92}%`}
+        width={`${layout.shuffle.hotspots[0]?.width ?? 14}%`}
+        height={`${layout.shuffle.hotspots[0]?.height ?? 7}%`}
+        onClick={finish}
+      />
     </motion.div>
   );
 }
