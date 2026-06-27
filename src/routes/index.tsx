@@ -255,7 +255,7 @@ function Index() {
           <img className="sm-base" src={baseImage} alt="" draggable={false} aria-hidden="true" />
         )}
 
-        <HeaderHomeHotspots top={gameState === "MENU" ? "3.2%" : "2.2%"} onHome={resetAll} />
+        <HeaderHomeHotspots top={gameState === "MENU" ? "3.2%" : "1.0%"} onHome={resetAll} />
 
         <CandleGlow gameState={gameState} />
         <CandleGlowDebugger gameState={gameState} />
