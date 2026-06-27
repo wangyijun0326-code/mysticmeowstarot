@@ -604,17 +604,10 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
         {physRef.current.map((_, i) => (
           <ShuffleCard key={i} phys={physRef} index={i} />
         ))}
-        <AnimatePresence>
-          {shuffling && (
-            <motion.div
-              className="sm-pile-glow"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: [0, 0.75, 0], scale: [0.7, 1.15, 1.4] }}
-              transition={{ duration: 1.4, ease: "easeOut" }}
-            />
-          )}
-        </AnimatePresence>
       </div>
+
+      <PileGlow shuffling={shuffling} />
+
 
       {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
           no duplicate pill, no overlapping hint text. Fine-tune left/top/width/
