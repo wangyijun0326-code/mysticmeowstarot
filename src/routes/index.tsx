@@ -624,6 +624,45 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
   );
 }
 
+/**
+ * The warm "shuffle complete" gold flare. Position / size / colour depth come
+ * from the persisted pile-glow store (editable via the 金光校准 tool). It blooms
+ * once when a shuffle finishes, and renders statically while the calibration
+ * panel is open so it can be aligned by eye.
+ */
+function PileGlow({ shuffling }: { shuffling: boolean }) {
+  const cfg = usePileGlow();
+  const preview = usePileGlowPreview();
+
+  const baseStyle: CSSProperties = {
+    left: `${cfg.x}%`,
+    top: `${cfg.y}%`,
+    width: `${cfg.size}%`,
+    height: `${cfg.size}%`,
+    ["--pile-glow-intensity" as string]: cfg.intensity,
+  };
+
+  if (preview) {
+    return <div className="sm-pile-glow" style={{ ...baseStyle, opacity: cfg.intensity }} />;
+  }
+
+  return (
+    <AnimatePresence>
+      {shuffling && (
+        <motion.div
+          className="sm-pile-glow"
+          style={baseStyle}
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: [0, cfg.intensity, 0], scale: [0.7, 1.15, 1.4] }}
+          transition={{ duration: 1.4, ease: "easeOut" }}
+        />
+      )}
+    </AnimatePresence>
+  );
+}
+
+
+
 function ShuffleCard({
   phys,
   index,
