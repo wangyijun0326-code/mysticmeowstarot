@@ -21,6 +21,8 @@ import { generateTarotReading } from "@/lib/tarot-reading.functions";
 import { useGesture } from "@/components/gesture/gesture-provider";
 import { useSlotLayout } from "@/lib/slot-layout";
 import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
+import { useHotspotLayout } from "@/lib/hotspot-layout";
+import { HotspotDebugger } from "@/components/hotspot-debugger";
 import { useGlow } from "@/lib/candle-glow";
 import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
 import { cn } from "@/lib/utils";
@@ -252,6 +254,8 @@ function Index() {
 
         <CandleGlow gameState={gameState} />
         <CandleGlowDebugger gameState={gameState} />
+        <HotspotDebugger screenId={gameState === "MENU" ? "menu" : gameState === "SPREAD_SELECTION" ? "spreads" : "shuffle"} />
+
 
 
         <AnimatePresence>
@@ -393,6 +397,7 @@ function HeaderNavButton({
 /* ------------------------------------------------------------------ MENU */
 
 function MenuOverlay({ onStart }: { onStart: () => void }) {
+  const layout = useHotspotLayout();
   return (
     <motion.div
       className="sm-layer"
@@ -400,62 +405,52 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Hotspot
-        label="开始占卜"
-        left="77%"
-        top="65.4%"
-        width="11%"
-        height="19.5%"
-        className="is-menu-paw"
-        onClick={onStart}
-      />
-      <Hotspot
-        label="使用指南"
-        left="89.2%"
-        top="65.4%"
-        width="11%"
-        height="19.5%"
-        className="is-menu-paw"
-        onClick={() => undefined}
-        muted
-      />
-
-    </motion.div>
-  );
-}
-
-/* -------------------------------------------------------- SPREAD SELECTION */
-
-function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
-  const panels: Array<{ id: SpreadId; left: string; rotate: string }> = [
-    { id: "daily", left: "23.3%", rotate: "0deg" },
-    { id: "three", left: "49.4%", rotate: "0deg" },
-    { id: "either", left: "76.3%", rotate: "0deg" },
-  ];
-  return (
-    <motion.div
-      className="sm-layer"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      {panels.map((panel) => (
+      {layout.menu.hotspots.map((h) => (
         <Hotspot
-          key={panel.id}
-          label={SPREADS[panel.id].subtitle}
-          left={panel.left}
-          top="56.5%"
-          width="24.5%"
-          height="47%"
-          className="is-spread-panel"
-          rotate={panel.rotate}
-          onClick={() => onChoose(panel.id)}
+          key={h.id}
+          label={h.label}
+          left={`${h.left}%`}
+          top={`${h.top}%`}
+          width={`${h.width}%`}
+          height={`${h.height}%`}
+          className={h.id === "start" ? "is-menu-paw" : "is-menu-paw"}
+          muted={h.id !== "start"}
+          onClick={h.id === "start" ? onStart : () => undefined}
         />
       ))}
     </motion.div>
   );
-
 }
+
+
+/* -------------------------------------------------------- SPREAD SELECTION */
+
+function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
+  const layout = useHotspotLayout();
+  return (
+    <motion.div
+      className="sm-layer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {layout.spreads.hotspots.map((h) => (
+        <Hotspot
+          key={h.id}
+          label={h.label}
+          left={`${h.left}%`}
+          top={`${h.top}%`}
+          width={`${h.width}%`}
+          height={`${h.height}%`}
+          className="is-spread-panel"
+          rotate={h.rotate !== undefined ? `${h.rotate}deg` : "0deg"}
+          onClick={() => onChoose(h.id as SpreadId)}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
 
 /* -------------------------------------------------- SHUFFLE (physics pile) */
 
@@ -484,6 +479,7 @@ function makePhys(): CardPhys[] {
 
 function ShuffleStage({ onDone }: { onDone: () => void }) {
   const { pointerRef } = useGesture();
+  const layout = useHotspotLayout();
   const [shuffling, setShuffling] = useState(false);
   const doneRef = useRef(false);
   const pileRef = useRef<HTMLDivElement | null>(null);
@@ -620,7 +616,14 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
           no duplicate pill, no overlapping hint text. Fine-tune left/top/width/
           height in preview so it lands exactly on the painted button. */}
-      <Hotspot label="完成洗牌" left="50%" top="92%" width="14%" height="7%" onClick={finish} />
+      <Hotspot
+        label={layout.shuffle.hotspots[0]?.label ?? "完成洗牌"}
+        left={`${layout.shuffle.hotspots[0]?.left ?? 50}%`}
+        top={`${layout.shuffle.hotspots[0]?.top ?? 92}%`}
+        width={`${layout.shuffle.hotspots[0]?.width ?? 14}%`}
+        height={`${layout.shuffle.hotspots[0]?.height ?? 7}%`}
+        onClick={finish}
+      />
     </motion.div>
   );
 }
