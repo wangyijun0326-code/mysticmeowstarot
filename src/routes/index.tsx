@@ -8,7 +8,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, RotateCcw } from "lucide-react";
+import { ChevronLeft, RotateCcw, X } from "lucide-react";
 import {
   SPREADS,
   SPREAD_ASSETS,
