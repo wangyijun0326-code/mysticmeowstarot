@@ -561,7 +561,9 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
     let prevY = 0;
     let prevAngle: number | null = null;
     let totalAngle = 0;
+    let usedHand = false;
     let inited = false;
+
 
     const loop = () => {
       const p = pointerRef.current;
@@ -586,13 +588,19 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
         const dyc = p.y - cy;
         const distToCenter = Math.hypot(dxc, dyc);
         const speed = Math.hypot(pvx, pvy);
+        const isHand = p.handActive && !p.down;
+        // The hand cursor is smoothed/slower than the mouse, so it needs a
+        // lower speed gate and a wider engage radius to keep accumulating angle.
+        const speedGate = isHand ? 0.2 : 0.6;
         const engaged =
           !doneRef.current &&
           (p.handActive || p.down) &&
-          distToCenter < unit * 3.2 &&
-          speed > 0.6;
+          distToCenter < unit * (isHand ? 4.2 : 3.2) &&
+          speed > speedGate;
+
 
         if (engaged) {
+          if (isHand) usedHand = true;
           const ang = Math.atan2(dyc, dxc);
           if (prevAngle !== null) {
             let d = ang - prevAngle;
@@ -604,6 +612,7 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
         } else {
           prevAngle = null;
         }
+
 
         for (const c of phys) {
           if (engaged) {
@@ -632,7 +641,8 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
           c.rot += c.vr;
         }
 
-        if (totalAngle > Math.PI * 6) finish();
+        // Hand-only: ~1.5 turns is enough; mouse keeps the satisfying 3 turns.
+        if (totalAngle > (usedHand ? Math.PI * 3 : Math.PI * 6)) finish();
       }
       raf = requestAnimationFrame(loop);
     };
