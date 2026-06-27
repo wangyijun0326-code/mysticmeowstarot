@@ -1126,7 +1126,6 @@ function DrawingStage({
         ))}
       </div>
 
-      <SlotLayoutDebugger spreadId={spreadId} />
     </motion.div>
   );
 }
