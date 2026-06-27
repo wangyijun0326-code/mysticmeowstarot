@@ -641,7 +641,8 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
           c.rot += c.vr;
         }
 
-        if (totalAngle > Math.PI * 6) finish();
+        // Hand-only: ~1.5 turns is enough; mouse keeps the satisfying 3 turns.
+        if (totalAngle > (usedHand ? Math.PI * 3 : Math.PI * 6)) finish();
       }
       raf = requestAnimationFrame(loop);
     };
