@@ -25,6 +25,8 @@ import { useHotspotLayout } from "@/lib/hotspot-layout";
 import { HotspotDebugger } from "@/components/hotspot-debugger";
 import { useGlow } from "@/lib/candle-glow";
 import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
+import { usePileGlow, usePileGlowPreview } from "@/lib/pile-glow";
+import { PileGlowDebugger } from "@/components/pile-glow-debugger";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -254,6 +256,7 @@ function Index() {
 
         <CandleGlow gameState={gameState} />
         <CandleGlowDebugger gameState={gameState} />
+        {gameState === "SHUFFLE" && <PileGlowDebugger />}
         <HotspotDebugger screenId={gameState === "MENU" ? "menu" : gameState === "SPREAD_SELECTION" ? "spreads" : "shuffle"} />
 
 
@@ -601,17 +604,10 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
         {physRef.current.map((_, i) => (
           <ShuffleCard key={i} phys={physRef} index={i} />
         ))}
-        <AnimatePresence>
-          {shuffling && (
-            <motion.div
-              className="sm-pile-glow"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: [0, 0.75, 0], scale: [0.7, 1.15, 1.4] }}
-              transition={{ duration: 1.4, ease: "easeOut" }}
-            />
-          )}
-        </AnimatePresence>
       </div>
+
+      <PileGlow shuffling={shuffling} />
+
 
       {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
           no duplicate pill, no overlapping hint text. Fine-tune left/top/width/
@@ -627,6 +623,45 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
     </motion.div>
   );
 }
+
+/**
+ * The warm "shuffle complete" gold flare. Position / size / colour depth come
+ * from the persisted pile-glow store (editable via the 金光校准 tool). It blooms
+ * once when a shuffle finishes, and renders statically while the calibration
+ * panel is open so it can be aligned by eye.
+ */
+function PileGlow({ shuffling }: { shuffling: boolean }) {
+  const cfg = usePileGlow();
+  const preview = usePileGlowPreview();
+
+  const baseStyle: CSSProperties = {
+    left: `${cfg.x}%`,
+    top: `${cfg.y}%`,
+    width: `${cfg.size}%`,
+    height: `${cfg.size}%`,
+    ["--pile-glow-intensity" as string]: cfg.intensity,
+  };
+
+  if (preview) {
+    return <div className="sm-pile-glow" style={{ ...baseStyle, opacity: cfg.intensity }} />;
+  }
+
+  return (
+    <AnimatePresence>
+      {shuffling && (
+        <motion.div
+          className="sm-pile-glow"
+          style={baseStyle}
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: [0, cfg.intensity, 0], scale: [0.7, 1.15, 1.4] }}
+          transition={{ duration: 1.4, ease: "easeOut" }}
+        />
+      )}
+    </AnimatePresence>
+  );
+}
+
+
 
 function ShuffleCard({
   phys,
