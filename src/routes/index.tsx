@@ -24,6 +24,7 @@ import { useSlotLayout } from "@/lib/slot-layout";
 import { useHotspotLayout } from "@/lib/hotspot-layout";
 import { useGlow } from "@/lib/candle-glow";
 import { usePileGlow, usePileGlowPreview } from "@/lib/pile-glow";
+import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -287,6 +288,8 @@ function Index() {
           )}
         </AnimatePresence>
       </div>
+
+      <CandleGlowDebugger gameState={gameState} />
     </div>
   );
 }
