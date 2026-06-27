@@ -8,7 +8,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronLeft, RotateCcw } from "lucide-react";
+import { ChevronLeft, RotateCcw, X } from "lucide-react";
 import {
   SPREADS,
   SPREAD_ASSETS,
@@ -70,6 +70,39 @@ const BACK_SRC = "/assets/back.png";
 const assetUrl = (file: string) => `/assets/${file}`;
 const spring = { type: "spring", stiffness: 200, damping: 24, mass: 0.8 } as const;
 
+/** Dismissable semi-transparent gesture guide popup. */
+function GestureGuideToast({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      className="sm-guide-toast"
+      initial={{ opacity: 0, y: -20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -12, scale: 0.96 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
+      <button
+        type="button"
+        className="sm-guide-toast__close"
+        onClick={onClose}
+        aria-label="关闭手势指南"
+        data-gesture-ignore
+      >
+        <X className="size-4" />
+      </button>
+      <div className="sm-guide-toast__paw">🐾</div>
+      <h3 className="sm-guide-toast__title">隔空召唤 · 喵爪手势指南</h3>
+      <p className="sm-guide-toast__body">
+        恭喜解锁“隔空抽牌”魔法！动作慢一点更灵验哦：
+        <br />
+        张手悬停或滑屏来查看卡牌，对准目标握拳即可选定。
+      </p>
+      <p className="sm-guide-toast__tip">
+        抓牌小贴士：如果喵爪感应累了，随时欢迎召唤鼠标特工来帮忙（尤其在洗牌页面，用鼠标更省力呢）~
+      </p>
+    </motion.div>
+  );
+}
+
 function Index() {
   const [gameState, setGameState] = useState<GameState>("MENU");
   const [spreadId, setSpreadId] = useState<SpreadId | null>(null);
@@ -85,6 +118,7 @@ function Index() {
     { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null
   >(null);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
+  const [showGestureGuide, setShowGestureGuide] = useState(true);
   const [readingError, setReadingError] = useState<string | null>(null);
   const readingRequested = useRef(false);
 
@@ -238,6 +272,8 @@ function Index() {
 
   return (
     <div className="sm-root">
+      {showGestureGuide && <GestureGuideToast onClose={() => setShowGestureGuide(false)} />}
+
       {gameState !== "MENU" && (
         <GlobalBackButton
           onBack={showResult ? resetAll : goBack}
