@@ -426,11 +426,7 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
 /* -------------------------------------------------------- SPREAD SELECTION */
 
 function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
-  const panels: Array<{ id: SpreadId; left: string; rotate: string }> = [
-    { id: "daily", left: "23.3%", rotate: "0deg" },
-    { id: "three", left: "49.4%", rotate: "0deg" },
-    { id: "either", left: "76.3%", rotate: "0deg" },
-  ];
+  const layout = useHotspotLayout();
   return (
     <motion.div
       className="sm-layer"
@@ -438,23 +434,23 @@ function SpreadOverlay({ onChoose }: { onChoose: (id: SpreadId) => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {panels.map((panel) => (
+      {layout.spreads.hotspots.map((h) => (
         <Hotspot
-          key={panel.id}
-          label={SPREADS[panel.id].subtitle}
-          left={panel.left}
-          top="56.5%"
-          width="24.5%"
-          height="47%"
+          key={h.id}
+          label={h.label}
+          left={`${h.left}%`}
+          top={`${h.top}%`}
+          width={`${h.width}%`}
+          height={`${h.height}%`}
           className="is-spread-panel"
-          rotate={panel.rotate}
-          onClick={() => onChoose(panel.id)}
+          rotate={h.rotate !== undefined ? `${h.rotate}deg` : "0deg"}
+          onClick={() => onChoose(h.id as SpreadId)}
         />
       ))}
     </motion.div>
   );
-
 }
+
 
 /* -------------------------------------------------- SHUFFLE (physics pile) */
 
