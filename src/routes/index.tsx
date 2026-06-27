@@ -397,6 +397,7 @@ function HeaderNavButton({
 /* ------------------------------------------------------------------ MENU */
 
 function MenuOverlay({ onStart }: { onStart: () => void }) {
+  const layout = useHotspotLayout();
   return (
     <motion.div
       className="sm-layer"
@@ -404,29 +405,23 @@ function MenuOverlay({ onStart }: { onStart: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Hotspot
-        label="开始占卜"
-        left="77%"
-        top="65.4%"
-        width="11%"
-        height="19.5%"
-        className="is-menu-paw"
-        onClick={onStart}
-      />
-      <Hotspot
-        label="使用指南"
-        left="89.2%"
-        top="65.4%"
-        width="11%"
-        height="19.5%"
-        className="is-menu-paw"
-        onClick={() => undefined}
-        muted
-      />
-
+      {layout.menu.hotspots.map((h) => (
+        <Hotspot
+          key={h.id}
+          label={h.label}
+          left={`${h.left}%`}
+          top={`${h.top}%`}
+          width={`${h.width}%`}
+          height={`${h.height}%`}
+          className={h.id === "start" ? "is-menu-paw" : "is-menu-paw"}
+          muted={h.id !== "start"}
+          onClick={h.id === "start" ? onStart : () => undefined}
+        />
+      ))}
     </motion.div>
   );
 }
+
 
 /* -------------------------------------------------------- SPREAD SELECTION */
 
