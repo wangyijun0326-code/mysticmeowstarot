@@ -1004,7 +1004,7 @@ function DrawingStage({
         <div
           className="sm-pool-wrap"
           ref={poolWrapRef}
-          style={{ position: "absolute", left: 0, right: 0, bottom: poolConfig.bottom }}
+          style={{ position: "absolute", left: "5%", right: "5%", bottom: poolConfig.bottom }}
           aria-label={`${SPREADS[spreadId].title} 牌堆`}
         >
           <motion.div
