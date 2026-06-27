@@ -253,9 +253,6 @@ function Index() {
 
         <CandleGlow gameState={gameState} />
 
-
-
-
         <AnimatePresence>
           {gameState === "MENU" && (
             <MenuOverlay key="menu" onStart={() => setGameState("SPREAD_SELECTION")} />
