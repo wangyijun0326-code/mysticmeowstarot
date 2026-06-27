@@ -214,6 +214,88 @@
   inset: 0;
 }
 
+/* ---- Dismissable gesture guide toast ------------------------------------ */
+.sm-guide-toast {
+  position: fixed;
+  top: clamp(1rem, 3vh, 2.5rem);
+  right: clamp(1rem, 3vw, 2.5rem);
+  z-index: 100;
+  width: min(92vw, 380px);
+  padding: 1.1rem 1.25rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklab, var(--gold) 30%, transparent);
+  background: color-mix(in oklab, var(--background) 78%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    0 16px 40px oklch(0.03 0.01 300 / 55%),
+    0 0 0 1px color-mix(in oklab, var(--gold) 15%, transparent);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  pointer-events: auto;
+}
+
+.sm-guide-toast__close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--gold) 25%, transparent);
+  background: color-mix(in oklab, var(--gold) 12%, transparent);
+  color: var(--gold);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.sm-guide-toast__close:hover {
+  background: color-mix(in oklab, var(--gold) 22%, transparent);
+  transform: scale(1.05);
+}
+
+.sm-guide-toast__paw {
+  font-size: 1.6rem;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+
+.sm-guide-toast__title {
+  margin: 0 2rem 0.6rem 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+.sm-guide-toast__body {
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: color-mix(in oklab, var(--foreground) 95%, transparent);
+}
+
+.sm-guide-toast__tip {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: color-mix(in oklab, var(--muted-foreground) 92%, transparent);
+  border-top: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .sm-guide-toast {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
+
 /* ---- Flickering candle-flame halo --------------------------------------- */
 .sm-candle-glow-layer {
   pointer-events: none;
