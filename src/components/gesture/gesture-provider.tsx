@@ -264,7 +264,7 @@ function statusLabel(enabled: boolean, status: HandTrackingStatus) {
     case "loading":
       return "正在载入手势模型……";
     case "tracking":
-      return "手势已连接 · 捏合抓取，左缘右滑返回";
+      return "手势已连接 · 张开手掌控制，握拳选择";
     case "denied":
       return "摄像头被拒绝，可用鼠标操作";
     case "error":
