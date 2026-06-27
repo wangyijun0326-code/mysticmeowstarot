@@ -29,7 +29,7 @@ export type GlowMap = Record<GlowState, GlowSpot[]>;
 export const DEFAULT_GLOW: GlowMap = {
   MENU: [{ x: 12, y: 36 }],
   SPREAD_SELECTION: [{ x: 6, y: 13 }],
-  SHUFFLE: [],
+  SHUFFLE: [{ x: 89, y: 32 }],
   DRAWING: [{ x: 7, y: 15 }],
   REVERSAL: [{ x: 7, y: 15 }],
   END: [{ x: 7, y: 15 }],
