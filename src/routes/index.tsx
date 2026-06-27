@@ -1171,17 +1171,27 @@ function ReversalStage({
                   ease: [0.22, 0.61, 0.36, 1],
                 }}
               >
-                <div className="sm-flip-face sm-flip-front">
-                  <img src={BACK_SRC} alt="" draggable={false} />
-                </div>
-                <div className="sm-flip-face sm-flip-back">
-                  <img
-                    src={getCardFrontPath(card.number)}
-                    alt={`${card.name}${card.state}`}
-                    className={cn(card.state === "逆位" && "is-reversed")}
-                    draggable={false}
-                  />
-                </div>
+                <motion.div
+                  className="sm-flip-inner"
+                  animate={{ x: flipped ? "-100%" : 0 }}
+                  transition={{
+                    duration: FLIP_DURATION_MS / 1000,
+                    delay: (index * FLIP_STAGGER_MS) / 1000,
+                    ease: [0.22, 0.61, 0.36, 1],
+                  }}
+                >
+                  <div className="sm-flip-face sm-flip-front">
+                    <img src={BACK_SRC} alt="" draggable={false} />
+                  </div>
+                  <div className="sm-flip-face sm-flip-back">
+                    <img
+                      src={getCardFrontPath(card.number)}
+                      alt={`${card.name}${card.state}`}
+                      className={cn(card.state === "逆位" && "is-reversed")}
+                      draggable={false}
+                    />
+                  </div>
+                </motion.div>
               </motion.div>
             </div>
           ))}
