@@ -85,6 +85,7 @@ function Index() {
     { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null
   >(null);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
+  const [showGestureGuide, setShowGestureGuide] = useState(true);
   const [readingError, setReadingError] = useState<string | null>(null);
   const readingRequested = useRef(false);
 
