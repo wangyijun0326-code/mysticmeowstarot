@@ -102,7 +102,9 @@ function GestureGuideToast({ onClose }: { onClose: () => void }) {
         <h3 className="sm-guide-toast__title">喵爪手势指南</h3>
       </div>
       <p className="sm-guide-toast__body">
-        恭喜解锁“隔空抽牌”魔法！动作慢一点更灵验哦：
+        恭喜解锁“隔空抽牌”魔法！动作慢一点
+        <br />
+        更灵验哦：
         <br />
         张手悬停或滑屏来查看卡牌，对准目标握拳即可选定。
       </p>
