@@ -647,6 +647,20 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      <AnimatePresence>
+        {showHint && (
+          <motion.div
+            className="sm-shuffle-hint"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.6 }}
+          >
+            此处摇晃鼠标，洗牌效果更佳哦！
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="sm-pile" ref={pileRef}>
         {physRef.current.map((_, i) => (
           <ShuffleCard key={i} phys={physRef} index={i} />
@@ -654,6 +668,7 @@ function ShuffleStage({ onDone }: { onDone: () => void }) {
       </div>
 
       <PileGlow shuffling={shuffling} />
+
 
 
       {/* Transparent trigger sitting on the design's own painted 完成洗牌 button —
