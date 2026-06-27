@@ -289,7 +289,7 @@ function Index() {
         </AnimatePresence>
       </div>
 
-      <CandleGlowDebugger gameState={gameState} />
+      {import.meta.env.DEV && <CandleGlowDebugger gameState={gameState} />}
     </div>
   );
 }
