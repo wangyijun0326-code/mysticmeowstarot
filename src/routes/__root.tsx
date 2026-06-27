@@ -91,7 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Mystic Meows Tarot" },
-      { name: "description", content: "沉浸式猫咪塔罗抽牌体验，含洗牌、揭牌仪式与 AI 深度解读。" },
+      { name: "description", content: "沉浸式猫咪塔罗占卜体验。内置每日一签、时间流、二选一复合牌阵，支持无限次免费洗牌，配合流畅的在线揭牌仪式感动效，搭载 AI 灵性后台，实时为你梳理错综复杂的复合运势。" },
       { property: "og:title", content: "Mystic Meows Tarot" },
       {
         property: "og:description",
@@ -99,6 +99,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Mystic Meows Tarot" },
+      { property: "og:description", content: "沉浸式猫咪塔罗占卜体验。内置每日一签、时间流、二选一复合牌阵，支持无限次免费洗牌，配合流畅的在线揭牌仪式感动效，搭载 AI 灵性后台，实时为你梳理错综复杂的复合运势。" },
+      { name: "twitter:description", content: "沉浸式猫咪塔罗占卜体验。内置每日一签、时间流、二选一复合牌阵，支持无限次免费洗牌，配合流畅的在线揭牌仪式感动效，搭载 AI 灵性后台，实时为你梳理错综复杂的复合运势。" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/rEGPJ3HYt2SFBvk6q7Kn6NXEO9I2/social-images/social-1782527116541-menu.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/rEGPJ3HYt2SFBvk6q7Kn6NXEO9I2/social-images/social-1782527116541-menu.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
