@@ -602,11 +602,14 @@
   color: color-mix(in oklab, var(--gold) 72%, transparent);
 }
 
-/* Bottom carousel — wrapper clips, inner track drags horizontally (drag="x") */
+/* Bottom carousel — wrapper clips horizontally, inner track drags (drag="x").
+   overflow-x hidden keeps the rail inside the painted frame; the generous
+   padding-top reserves room so a lifted/hovered card is never clipped at top. */
 .sm-pool-wrap {
   flex: 0 0 auto;
-  width: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding-top: clamp(18px, 2.4vh, 30px);
   padding-bottom: clamp(0.6rem, 2vh, 1.4rem);
 }
 
