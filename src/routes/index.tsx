@@ -253,9 +253,7 @@ function Index() {
         <HeaderHomeHotspots top={gameState === "MENU" ? "3.2%" : "1.4%"} onHome={resetAll} />
 
         <CandleGlow gameState={gameState} />
-        <CandleGlowDebugger gameState={gameState} />
-        {gameState === "SHUFFLE" && <PileGlowDebugger />}
-        <HotspotDebugger screenId={gameState === "MENU" ? "menu" : gameState === "SPREAD_SELECTION" ? "spreads" : "shuffle"} />
+
 
 
 
