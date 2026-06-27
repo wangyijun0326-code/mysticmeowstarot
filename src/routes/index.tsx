@@ -22,11 +22,8 @@ import { useGesture } from "@/components/gesture/gesture-provider";
 import { useSlotLayout } from "@/lib/slot-layout";
 import { SlotLayoutDebugger } from "@/components/slot-layout-debugger";
 import { useHotspotLayout } from "@/lib/hotspot-layout";
-import { HotspotDebugger } from "@/components/hotspot-debugger";
 import { useGlow } from "@/lib/candle-glow";
-import { CandleGlowDebugger } from "@/components/candle-glow-debugger";
 import { usePileGlow, usePileGlowPreview } from "@/lib/pile-glow";
-import { PileGlowDebugger } from "@/components/pile-glow-debugger";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -255,11 +252,6 @@ function Index() {
         <HeaderHomeHotspots top={gameState === "MENU" ? "3.2%" : "1.4%"} onHome={resetAll} />
 
         <CandleGlow gameState={gameState} />
-        <CandleGlowDebugger gameState={gameState} />
-        {gameState === "SHUFFLE" && <PileGlowDebugger />}
-        <HotspotDebugger screenId={gameState === "MENU" ? "menu" : gameState === "SPREAD_SELECTION" ? "spreads" : "shuffle"} />
-
-
 
         <AnimatePresence>
           {gameState === "MENU" && (
