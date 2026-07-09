@@ -278,6 +278,16 @@ function Index() {
     return () => window.removeEventListener("gesture:back", handler as EventListener);
   }, [goBack]);
 
+  // Only auto-open the gesture guide on desktop (mouse) devices. On touch
+  // devices the camera gesture isn't the primary input, so the large popup
+  // would just cover the screen on first load. Read in an effect to avoid an
+  // SSR/hydration mismatch.
+  useEffect(() => {
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      setShowGestureGuide(true);
+    }
+  }, []);
+
   const showResult = gameState === "END";
 
   return (
