@@ -108,14 +108,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/png", href: "/assets/back.png" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600&family=Noto+Serif+SC:wght@400;500;600;700&display=swap",
-      },
+      // NOTE: Google Fonts (fonts.googleapis.com / fonts.gstatic.com) are removed
+      // on purpose. In mainland China those Google connections get reset/hang,
+      // and a render-blocking <link rel="stylesheet"> in <head> then blocks first
+      // paint on every device — causing "网络连接关闭 / 打不开". The CSS font stack
+      // in styles.css already falls back to Songti SC / STSong / serif, which are
+      // present on Chinese systems, so the look is preserved without the remote fetch.
       { rel: "canonical", href: "/" },
     ],
+
     scripts: [
       {
         type: "application/ld+json",
