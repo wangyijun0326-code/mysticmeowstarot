@@ -81,11 +81,23 @@ export function useHandTracking(enabled: boolean) {
         setStatus("loading");
         const vision = await import("@mediapipe/tasks-vision");
         const fileset = await vision.FilesetResolver.forVisionTasks(WASM_BASE);
-        const landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-          runningMode: "VIDEO",
-          numHands: 1,
-        });
+        // Try the GPU delegate first, then fall back to CPU. Many mobile
+        // browsers (and some locked-down desktops) can't create the GPU
+        // delegate; without this fallback tracking would just fail there.
+        let landmarker: Awaited<ReturnType<typeof vision.HandLandmarker.createFromOptions>>;
+        try {
+          landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
+            runningMode: "VIDEO",
+            numHands: 1,
+          });
+        } catch {
+          landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
+            baseOptions: { modelAssetPath: MODEL_URL, delegate: "CPU" },
+            runningMode: "VIDEO",
+            numHands: 1,
+          });
+        }
         if (cancelled) {
           landmarker.close();
           return;
