@@ -314,9 +314,23 @@
 
 @media (max-width: 640px) {
   .sm-guide-toast {
+    top: max(4.5rem, env(safe-area-inset-top));
     right: 4vw;
-    left: auto;
-    width: 88vw;
+    left: 4vw;
+    width: auto;
+    padding: 0.75rem 1rem 0.9rem;
+  }
+  .sm-guide-toast__title {
+    font-size: 0.95rem;
+  }
+  .sm-guide-toast__body {
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+  .sm-guide-toast__tip {
+    font-size: 0.74rem;
+    line-height: 1.45;
+    padding-top: 0.6rem;
   }
 }
 

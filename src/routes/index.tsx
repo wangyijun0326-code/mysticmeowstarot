@@ -128,7 +128,7 @@ function Index() {
     { summary: string; perCard: Array<{ position: string; title: string; text: string }> } | null
   >(null);
   const [isLoadingReading, setIsLoadingReading] = useState(false);
-  const [showGestureGuide, setShowGestureGuide] = useState(true);
+  const [showGestureGuide, setShowGestureGuide] = useState(false);
   const [readingError, setReadingError] = useState<string | null>(null);
   const readingRequested = useRef(false);
 
@@ -277,6 +277,16 @@ function Index() {
     window.addEventListener("gesture:back", handler as EventListener);
     return () => window.removeEventListener("gesture:back", handler as EventListener);
   }, [goBack]);
+
+  // Only auto-open the gesture guide on desktop (mouse) devices. On touch
+  // devices the camera gesture isn't the primary input, so the large popup
+  // would just cover the screen on first load. Read in an effect to avoid an
+  // SSR/hydration mismatch.
+  useEffect(() => {
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      setShowGestureGuide(true);
+    }
+  }, []);
 
   const showResult = gameState === "END";
 

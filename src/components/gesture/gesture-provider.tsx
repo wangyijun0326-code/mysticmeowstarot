@@ -93,9 +93,14 @@ export function GestureProvider({ children }: { children: ReactNode }) {
 
   const toggle = useCallback(() => setEnabled((v) => !v), []);
 
-  // Kick off gesture tracking on first client mount.
+  // Auto-start hand tracking only on devices with a real mouse (fine pointer +
+  // hover) — i.e. desktops/laptops. On phones and tablets the user holds the
+  // device in one hand, so front-camera hand gestures are impractical and the
+  // heavy model just fails silently; those devices rely on touch instead. The
+  // toggle stays available for anyone who still wants to try it.
   useEffect(() => {
-    setEnabled(true);
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (finePointer) setEnabled(true);
   }, []);
 
   // Track the real mouse so the unified pointer also works without a camera.
